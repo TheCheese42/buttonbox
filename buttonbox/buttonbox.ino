@@ -8,7 +8,7 @@
 Adafruit_SSD1306 oled(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("BUTTONBOX - SETUP");
 
   if (!oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
