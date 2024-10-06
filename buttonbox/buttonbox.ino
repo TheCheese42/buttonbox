@@ -16,7 +16,7 @@ const int BUTTON_MATRIX_VOLTAGES[] = {4095, 2000, 1000};  // ADAPT
 // ± Range of voltages
 const int BUTTON_VOLTAGE_RANGE = 50;
 
-// From top to bottom as the buttons are places, NOT as the pins are placed
+// From top to bottom as the buttons are placed, NOT as the pins are placed
 const int BUTTON_MATRIX_PINS[] = {26, 25, 33, 32, 35, 34};  // Eventually ADAPT
 
 const int BUTTON_SINGLE_PIN = 17;  // Eventually ADAPT
