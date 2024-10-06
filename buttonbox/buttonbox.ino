@@ -26,6 +26,9 @@ const int ROTARY_ENCODER_DT = 27;  // Eventually ADAPT
 
 int ROTARY_ENCODER_STATE = HIGH;
 
+// Use for things like LEDs
+int OUTPUT_PINS[] = {4, 0, 2, 16};
+
 
 void resetDisplay() {
   display.clearDisplay();
@@ -49,6 +52,17 @@ void pollRotaryEncoder();
 
 
 void setup() {
+  for (int pin : BUTTON_MATRIX_PINS) {
+    pinMode(pin, INPUT_PULLUP);
+  }
+  pinMode(BUTTON_SINGLE_PIN, INPUT);
+  pinMode(ROTARY_ENCODER_CLK, INPUT);
+  pinMode(ROTARY_ENCODER_DT, INPUT);
+  for (int pin : OUTPUT_PINS) {
+    pinMode(pin, OUTPUT);
+  }
+
+
   Serial.begin(115200);
   Serial.println("BUTTONBOX - SETUP");
 
@@ -100,9 +114,9 @@ void pollRotaryEncoder() {
     ROTARY_ENCODER_STATE = newState;
     int dtValue = digitalRead(ROTARY_ENCODER_DT);
     if (newState == LOW && dtValue == HIGH) {
-      Serial.println("EVENT ROTARYENCODER CLOCKWISE")
+      Serial.println("EVENT ROTARYENCODER CLOCKWISE");
     } else if (newState == LOW && dtValue == LOW) {
-      Serial.println("EVENT ROTARYENCODER COUNTERCLOCKWISE")
+      Serial.println("EVENT ROTARYENCODER COUNTERCLOCKWISE");
     }
   }
 }
@@ -154,7 +168,16 @@ void execDisplayTask(String task) {
     display.print(text);
   } else if (task.startsWith("display println")) {
     String text = task.substring(16);
-    display.print(text);
+    display.println(text);
+  } else if (task.startsWith("display profile")) {
+    String num = task.substring(16, 18);
+    String profile = task.substring(19);
+    resetDisplay();
+    display.setTextSize(2);
+    display.println("Profile: " + num);
+    display.println();
+    display.setTextSize(2);
+    display.println(profile);
   } else {
     Serial.println("ERROR Invalid display task '" + task + "'");
   }
