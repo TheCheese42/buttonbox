@@ -9,9 +9,22 @@ using namespace std;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
+// What voltages are the pins under when the buttons are pressed
+// From left to right
+const int BUTTON_MATRIX_VOLTAGES[] = {4095, 2000, 1000};  // ADAPT
 
-vector<String> tasks = {};
-vector<int> taskTimestamps = {};
+// ± Range of voltages
+const int BUTTON_VOLTAGE_RANGE = 50;
+
+// From top to bottom as the buttons are places, NOT as the pins are placed
+const int BUTTON_MATRIX_PINS[] = {26, 25, 33, 32, 35, 34};  // Eventually ADAPT
+
+const int BUTTON_SINGLE_PIN = 17;  // Eventually ADAPT
+
+const int ROTARY_ENCODER_CLK = 14;  // Eventually ADAPT
+const int ROTARY_ENCODER_DT = 27;  // Eventually ADAPT
+
+int ROTARY_ENCODER_STATE = HIGH;
 
 
 void resetDisplay() {
@@ -24,6 +37,15 @@ void resetDisplay() {
 
 
 void execTask(String task);
+
+
+void pollButtonMatrix();
+
+
+void pollButtonSingle();
+
+
+void pollRotaryEncoder();
 
 
 void setup() {
@@ -65,6 +87,59 @@ void loop() {
       String receivedData = Serial.readStringUntil('\n');
       execTask(receivedData);
     }
+    pollButtonMatrix();
+    pollButtonSingle();
+    pollRotaryEncoder();
+  }
+}
+
+
+void pollRotaryEncoder() {
+  int newState = digitalRead(ROTARY_ENCODER_CLK);
+  if (newState != ROTARY_ENCODER_STATE) {
+    ROTARY_ENCODER_STATE = newState;
+    int dtValue = digitalRead(ROTARY_ENCODER_DT);
+    if (newState == LOW && dtValue == HIGH) {
+      Serial.println("EVENT ROTARYENCODER CLOCKWISE")
+    } else if (newState == LOW && dtValue == LOW) {
+      Serial.println("EVENT ROTARYENCODER COUNTERCLOCKWISE")
+    }
+  }
+}
+
+
+void pollButtonMatrix() {
+  int rows = sizeof(BUTTON_MATRIX_PINS) / sizeof(BUTTON_MATRIX_PINS[0]);
+  int cols = sizeof(BUTTON_MATRIX_VOLTAGES) / sizeof(BUTTON_MATRIX_VOLTAGES[0]);
+
+  Serial.print("STATUS BUTTON MATRIX ");
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      int val = analogRead(BUTTON_MATRIX_PINS[i]);
+      if (val >= BUTTON_MATRIX_VOLTAGES[j] - BUTTON_VOLTAGE_RANGE && val <= BUTTON_MATRIX_VOLTAGES[j] + BUTTON_VOLTAGE_RANGE) {
+        // Button active
+        Serial.print("1");
+      } else {
+        // Button inactive
+        Serial.print("0");
+      }
+      if (j != cols - 1) {
+        Serial.print(":");
+      }
+    }
+    Serial.print(";");
+  }
+  Serial.println();
+}
+
+
+void pollButtonSingle() {
+  int state = digitalRead(BUTTON_SINGLE_PIN);
+  Serial.print("STATUS BUTTON SINGLE ");
+  if (state == HIGH) {
+    Serial.println("1");
+  } else {
+    Serial.println("0");
   }
 }
 
