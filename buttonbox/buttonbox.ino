@@ -173,7 +173,7 @@ void execDisplayTask(String task) {
     String num = task.substring(16, 18);
     String profile = task.substring(19);
     resetDisplay();
-    display.setTextSize(2);
+    display.setTextSize(1);
     display.println("Profile: " + num);
     display.println();
     display.setTextSize(2);
