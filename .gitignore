@@ -1,6 +1,14 @@
+# VSCode
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 
+# Python
 client/.venv/
-
 __pycache__/
+
+# Arduino build
+bin/
+.arduinobuild/
+
+# QT Links
+designer

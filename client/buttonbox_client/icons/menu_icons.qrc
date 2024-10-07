@@ -1,0 +1,17 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>code.png</file>
+    <file>cube-icon.png</file>
+    <file>users.png</file>
+    <file>tool.png</file>
+    <file>settings.png</file>
+    <file>power.png</file>
+    <file>moon.png</file>
+    <file>monitor.png</file>
+    <file>info.png</file>
+    <file>hard-drive.png</file>
+    <file>github.png</file>
+    <file>file-text.png</file>
+    <file>arrow-down.png</file>
+  </qresource>
+</RCC>
