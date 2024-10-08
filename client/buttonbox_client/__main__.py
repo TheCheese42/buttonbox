@@ -1,16 +1,21 @@
-from PyQt6.QtWidgets import QMainWindow, QDialog
-from ui.window import Ui_MainWindow
 import webbrowser
 from subprocess import getoutput
 
+from PyQt6.QtWidgets import QDialog, QMainWindow
+from ui.about_ui import Ui_About
+from ui.licenses_ui import Ui_Licenses
+from ui.profile_editor_ui import Ui_ProfileEditor
+from ui.profiles_ui import Ui_Profiles
+from ui.serial_monitor_ui import Ui_SerialMonitor
+from ui.settings_ui import Ui_Settings
+from ui.window_ui import Ui_MainWindow
 
 try:
-    from . import version
-    from . import config
+    from . import config, version
     config.init_config()
 except ImportError:
-    import version
     import config
+    import version
     config.init_config()
 
 
@@ -18,11 +23,11 @@ class Window(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__(None)
         self.setupUi(self)
-        self.connectSignatSlots()
+        self.connectSignalsSlots()
         self.light_stylesheet = self.styleSheet()
         self.dark_stylesheet = """
             QWidget {
-                backkground-color: rgb(40, 40, 40);
+                background-color: rgb(40, 40, 40);
                 color: white;
                 selection-background-color: transparent;
             }
@@ -53,14 +58,14 @@ class Window(QMainWindow, Ui_MainWindow):
         """
         self.apply_theme()
 
-    def setupUI(self, *agrs, **kwargs):
+    def setupUI(self, *args, **kwargs):
         super().setupUi(*args, **kwargs)
 
     def connectSignalsSlots(self):
-        pass
+        self.actionDark_Mode.changed.connect(self.dark_mode)
 
-    def dark_mode(self):
-        dark = self.actionDarkMode.isChecked()
+    def dark_mode(self, *_):
+        dark = self.actionDark_Mode.isChecked()
         config.set_config_value("dark", dark)
         self.apply_dark()
 
@@ -108,4 +113,3 @@ class AboutDialog(QDialog, Ui_About):
     def setupUi(self, *args, **kwargs):
         super().setupUi(*args, **kwargs)
         self.version.setText(version.version_string)
-
