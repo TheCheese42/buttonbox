@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Serial Monitor</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../icons/monitor.png</normaloff>../icons/monitor.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item alignment="Qt::AlignHCenter">
     <widget class="QLabel" name="label">

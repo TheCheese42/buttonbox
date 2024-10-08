@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Profiles</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../icons/cube-icon.png</normaloff>../icons/cube-icon.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item alignment="Qt::AlignHCenter">
     <widget class="QLabel" name="label">

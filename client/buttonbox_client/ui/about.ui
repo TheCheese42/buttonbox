@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>About Buttonbox</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../icons/cube-icon.png</normaloff>../icons/cube-icon.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item alignment="Qt::AlignHCenter">
     <widget class="QLabel" name="label">
@@ -102,7 +106,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="quitBtn">
      <property name="text">
       <string>Close</string>
      </property>
@@ -111,5 +115,22 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>quitBtn</sender>
+   <signal>clicked()</signal>
+   <receiver>About</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>186</x>
+     <y>144</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>186</x>
+     <y>82</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

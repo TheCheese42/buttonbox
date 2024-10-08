@@ -7,15 +7,15 @@
     <x>0</x>
     <y>0</y>
     <width>533</width>
-    <height>448</height>
+    <height>406</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Buttonbox Client</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../icons/menu_icons.qrc">
-    <normaloff>:/icons/cube-icon.png</normaloff>:/icons/cube-icon.png</iconset>
+   <iconset>
+    <normaloff>../icons/cube-icon.png</normaloff>../icons/cube-icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -597,8 +597,8 @@
       <string>Port</string>
      </property>
      <property name="icon">
-      <iconset resource="../icons/menu_icons.qrc">
-       <normaloff>:/icons/hard-drive.png</normaloff>:/icons/hard-drive.png</iconset>
+      <iconset>
+       <normaloff>../icons/hard-drive.png</normaloff>../icons/hard-drive.png</iconset>
      </property>
      <addaction name="actionPort_1"/>
     </widget>
@@ -612,7 +612,7 @@
      <string>Edit</string>
     </property>
     <addaction name="actionSettings"/>
-    <addaction name="actionProfile_Editor"/>
+    <addaction name="actionProfiles"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -652,8 +652,8 @@
   </action>
   <action name="actionRun_in_Background">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/arrow-down.png</normaloff>:/icons/arrow-down.png</iconset>
+    <iconset>
+     <normaloff>../icons/arrow-down.png</normaloff>../icons/arrow-down.png</iconset>
    </property>
    <property name="text">
     <string>Run in Background</string>
@@ -661,8 +661,8 @@
   </action>
   <action name="actionQuit">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/power.png</normaloff>:/icons/power.png</iconset>
+    <iconset>
+     <normaloff>../icons/power.png</normaloff>../icons/power.png</iconset>
    </property>
    <property name="text">
     <string>Quit</string>
@@ -670,26 +670,26 @@
   </action>
   <action name="actionSettings">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
+    <iconset>
+     <normaloff>../icons/settings.png</normaloff>../icons/settings.png</iconset>
    </property>
    <property name="text">
     <string>Settings...</string>
    </property>
   </action>
-  <action name="actionProfile_Editor">
+  <action name="actionProfiles">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/users.png</normaloff>:/icons/users.png</iconset>
+    <iconset>
+     <normaloff>../icons/users.png</normaloff>../icons/users.png</iconset>
    </property>
    <property name="text">
-    <string>Profile Editor...</string>
+    <string>Profiles...</string>
    </property>
   </action>
   <action name="actionSerial_Monitor">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/monitor.png</normaloff>:/icons/monitor.png</iconset>
+    <iconset>
+     <normaloff>../icons/monitor.png</normaloff>../icons/monitor.png</iconset>
    </property>
    <property name="text">
     <string>Serial Monitor</string>
@@ -697,8 +697,8 @@
   </action>
   <action name="actionLog">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/file-text.png</normaloff>:/icons/file-text.png</iconset>
+    <iconset>
+     <normaloff>../icons/file-text.png</normaloff>../icons/file-text.png</iconset>
    </property>
    <property name="text">
     <string>Log</string>
@@ -706,17 +706,20 @@
   </action>
   <action name="actionMicrocontroller_Debug_Log">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/tool.png</normaloff>:/icons/tool.png</iconset>
+    <iconset>
+     <normaloff>../icons/tool.png</normaloff>../icons/tool.png</iconset>
    </property>
    <property name="text">
     <string>Microcontroller Debug Log</string>
    </property>
   </action>
   <action name="actionDark_Mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/moon.png</normaloff>:/icons/moon.png</iconset>
+    <iconset>
+     <normaloff>../icons/moon.png</normaloff>../icons/moon.png</iconset>
    </property>
    <property name="text">
     <string>Dark Mode</string>
@@ -724,8 +727,8 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/info.png</normaloff>:/icons/info.png</iconset>
+    <iconset>
+     <normaloff>../icons/info.png</normaloff>../icons/info.png</iconset>
    </property>
    <property name="text">
     <string>About Buttonbox</string>
@@ -733,8 +736,8 @@
   </action>
   <action name="actionOpen_GitHub">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/github.png</normaloff>:/icons/github.png</iconset>
+    <iconset>
+     <normaloff>../icons/github.png</normaloff>../icons/github.png</iconset>
    </property>
    <property name="text">
     <string>Open GitHub</string>
@@ -742,8 +745,8 @@
   </action>
   <action name="actionOpen_Source_Licenses">
    <property name="icon">
-    <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/code.png</normaloff>:/icons/code.png</iconset>
+    <iconset>
+     <normaloff>../icons/code.png</normaloff>../icons/code.png</iconset>
    </property>
    <property name="text">
     <string>Open Source Licenses</string>

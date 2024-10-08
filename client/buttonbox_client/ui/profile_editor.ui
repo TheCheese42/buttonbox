@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Profile Editor</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../icons/cube-icon.png</normaloff>../icons/cube-icon.png</iconset>
+  </property>
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>

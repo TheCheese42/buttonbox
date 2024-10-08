@@ -3,7 +3,8 @@
 .vscode/settings.json
 
 # Python
-client/.venv/
+.venv/
+.pyside-venv/
 __pycache__/
 
 # Arduino build
