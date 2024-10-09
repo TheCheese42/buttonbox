@@ -4,8 +4,9 @@ import webbrowser
 from functools import partial
 # XXX from pathlib import Path
 from subprocess import getoutput
+from typing import TYPE_CHECKING
 
-from PyQt6.QtGui import QAction, QActionEvent
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow
 from serial.tools.list_ports import comports
 
@@ -27,19 +28,20 @@ except ImportError:
     from ui.window_ui import Ui_MainWindow
 
 try:
+    if TYPE_CHECKING:
+        from .__main__ import Connection
     from . import config, version
     config.init_config()
 except ImportError:
+    if TYPE_CHECKING:
+        from __main__ import Connection
     import config
     import version
     config.init_config()
 
 
-# XXX ICONS_PATH = Path(__file__).parent / "icons"
-
-
 class Window(QMainWindow, Ui_MainWindow):
-    def __init__(self, conn):
+    def __init__(self, conn: "Connection"):
         super().__init__(None)
         self.conn = conn
         self.setupUi(self)
@@ -119,6 +121,8 @@ class Window(QMainWindow, Ui_MainWindow):
                     action.setChecked(False)
 
     def connectSignalsSlots(self):
+        self.actionRun_in_Background.triggered.connect(self.close)
+        self.actionQuit.triggered.connect(self.full_quit)
         self.actionSettings.triggered.connect(self.settings)
         self.actionProfiles.triggered.connect(self.profiles)
         self.actionSerial_Monitor.triggered.connect(self.serial_monitor)
@@ -142,6 +146,14 @@ class Window(QMainWindow, Ui_MainWindow):
             self.dark_stylesheet if dark else self.light_stylesheet
         )
 
+    def close(self):
+        self.hide()
+
+    def full_quit(self):
+        self.conn.close()
+        super().close()
+        sys.exit(0)
+
     def about(self):
         dialog = AboutDialog(self)
         dialog.exec()
@@ -164,6 +176,11 @@ class Window(QMainWindow, Ui_MainWindow):
             selected_port = dialog.portBox.currentText()
             config.set_config_value("default_port", selected_port)
             self.select_default_port()
+            selected_baudrate = dialog.baudrateSpin.value()
+            config.set_config_value("baudrate", selected_baudrate)
+            self.conn.port = selected_port
+            self.conn.baudrate = selected_baudrate
+            self.conn.reconnect()
 
     def open_github(self):
         try:
@@ -269,16 +286,19 @@ class Settings(QDialog, Ui_Settings):
                 cur_index = i
         self.portBox.setCurrentIndex(cur_index)
 
+        self.baudrateSpin.setValue(config.get_config_value("baudrate"))
 
-def main(conn):
+
+def launch_gui(conn) -> tuple[QApplication, Window]:
     app = QApplication(sys.argv)
     app.setApplicationName("Buttonbox Client")
     app.setApplicationDisplayName("Buttonbox Client")
     app.setApplicationVersion(version.version_string)
     win = Window(conn)
     win.show()
-    sys.exit(app.exec())
+    return app, win
 
 
 if __name__ == "__main__":
-    main()
+    print("This must be run by the background process in __main__.py")
+    sys.exit(1)

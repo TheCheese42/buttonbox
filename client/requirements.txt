@@ -1,2 +1,4 @@
 PyQt6>=6.7.1
 pyserial>=3.5
+pystray>=0.19.5
+pillow>=10.4.0
