@@ -38,7 +38,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_2">
+       <widget class="QLabel" name="statusLabel">
         <property name="palette">
          <palette>
           <active>
@@ -85,7 +85,7 @@
        <number>14</number>
       </property>
       <item>
-       <widget class="QLabel" name="label_3">
+       <widget class="QLabel" name="profileLabel">
         <property name="baseSize">
          <size>
           <width>-2206</width>
@@ -104,7 +104,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="comboBox">
+       <widget class="QComboBox" name="profileCombo">
         <property name="minimumSize">
          <size>
           <width>410</width>
@@ -133,7 +133,7 @@
      </layout>
     </item>
     <item>
-     <widget class="QCheckBox" name="checkBox">
+     <widget class="QCheckBox" name="testCheckBox">
       <property name="font">
        <font>
         <family>Liberation Sans</family>
@@ -165,7 +165,7 @@
      </spacer>
     </item>
     <item>
-     <widget class="QFrame" name="frame">
+     <widget class="QFrame" name="testModeFrame">
       <property name="enabled">
        <bool>true</bool>
       </property>
