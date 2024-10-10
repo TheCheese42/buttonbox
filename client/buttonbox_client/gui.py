@@ -6,7 +6,7 @@ from functools import partial
 from subprocess import getoutput
 from typing import TYPE_CHECKING
 
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QCloseEvent
 from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow
 from serial.tools.list_ports import comports
 
@@ -145,6 +145,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.setStyleSheet(
             self.dark_stylesheet if dark else self.light_stylesheet
         )
+
+    def closeEvent(self, event: QCloseEvent):
+        event.ignore()
+        self.close()
 
     def close(self):
         self.hide()

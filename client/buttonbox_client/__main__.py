@@ -1,12 +1,17 @@
 import sys
 from pathlib import Path
-from queue import Queue
-from threading import Thread
 from typing import Callable, Optional
 
 import pystray
 import serial
 from PIL import Image
+
+try:
+    from . import config
+    from .gui import launch_gui
+except ImportError:
+    import config
+    from gui import launch_gui
 
 
 class Connection:
@@ -40,44 +45,12 @@ class Connection:
         self.connect()
 
 
-def start_gui(queue: Queue):
-    try:
-        from . import config
-        from .gui import launch_gui
-    except ImportError:
-        import config
-        from gui import launch_gui
-
-    queue.put(config)
-    queue.join()
-    conn: Connection = queue.get()
-    queue.task_done()
-
-    app, win = launch_gui(conn)
-    win.hide()
-    queue.put((app, win))
-    app.exec()
-
-
 def main():
-    queue = Queue()
-
-    thread = Thread(
-        target=start_gui,
-        name="Buttonbox-GUI",
-        daemon=True,
-        args=(queue,),
-    )
-    thread.start()
-
-    config = queue.get()
-    queue.task_done()
     port = config.get_config_value("default_port")
     baudrate = config.get_config_value("baudrate")
     conn = Connection(port, baudrate, config.log, config.log_mc)
-    queue.put(conn)
-    queue.join()
-    app, win = queue.get()
+    app, win = launch_gui(conn)
+    win.hide()
     tray_icon = Image.open(Path(__file__).parent / "icons" / "cube-icon.png")
 
     def show_gui(_):
@@ -101,7 +74,10 @@ def main():
         )
     )
 
-    icon.run()
+    icon.run_detached()
+    code = app.exec()
+    icon.stop()
+    sys.exit(code)
 
 
 if __name__ == "__main__":
