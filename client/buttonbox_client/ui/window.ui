@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../icons/cube-icon.png</normaloff>../icons/cube-icon.png</iconset>
+    <normaloff>../../../../../../../../../../../../../../.designer/icons/cube-icon.png</normaloff>../../../../../../../../../../../../../../.designer/icons/cube-icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -598,10 +598,11 @@
      </property>
      <property name="icon">
       <iconset>
-       <normaloff>../icons/hard-drive.png</normaloff>../icons/hard-drive.png</iconset>
+       <normaloff>../../../../../../.designer/icons/hard-drive.png</normaloff>../../../../../../.designer/icons/hard-drive.png</iconset>
      </property>
      <addaction name="actionPort_1"/>
     </widget>
+    <addaction name="actionRefresh_Ports"/>
     <addaction name="menuPort"/>
     <addaction name="separator"/>
     <addaction name="actionRun_in_Background"/>
@@ -653,7 +654,7 @@
   <action name="actionRun_in_Background">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/arrow-down.png</normaloff>../icons/arrow-down.png</iconset>
+     <normaloff>../../../../../../.designer/icons/arrow-down.png</normaloff>../../../../../../.designer/icons/arrow-down.png</iconset>
    </property>
    <property name="text">
     <string>Run in Background</string>
@@ -662,7 +663,7 @@
   <action name="actionQuit">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/power.png</normaloff>../icons/power.png</iconset>
+     <normaloff>../../../../../../.designer/icons/power.png</normaloff>../../../../../../.designer/icons/power.png</iconset>
    </property>
    <property name="text">
     <string>Quit</string>
@@ -671,46 +672,61 @@
   <action name="actionSettings">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/settings.png</normaloff>../icons/settings.png</iconset>
+     <normaloff>../../../../../../.designer/icons/settings.png</normaloff>../../../../../../.designer/icons/settings.png</iconset>
    </property>
    <property name="text">
     <string>Settings...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actionProfiles">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/users.png</normaloff>../icons/users.png</iconset>
+     <normaloff>../../../../../../.designer/icons/users.png</normaloff>../../../../../../.designer/icons/users.png</iconset>
    </property>
    <property name="text">
     <string>Profiles...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
   <action name="actionSerial_Monitor">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/monitor.png</normaloff>../icons/monitor.png</iconset>
+     <normaloff>../../../../../../.designer/icons/monitor.png</normaloff>../../../../../../.designer/icons/monitor.png</iconset>
    </property>
    <property name="text">
     <string>Serial Monitor</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
   <action name="actionLog">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/file-text.png</normaloff>../icons/file-text.png</iconset>
+     <normaloff>../../../../../../.designer/icons/file-text.png</normaloff>../../../../../../.designer/icons/file-text.png</iconset>
    </property>
    <property name="text">
     <string>Log</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="actionMicrocontroller_Debug_Log">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/tool.png</normaloff>../icons/tool.png</iconset>
+     <normaloff>../../../../../../.designer/icons/tool.png</normaloff>../../../../../../.designer/icons/tool.png</iconset>
    </property>
    <property name="text">
     <string>Microcontroller Debug Log</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+K</string>
    </property>
   </action>
   <action name="actionDark_Mode">
@@ -719,16 +735,19 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../icons/moon.png</normaloff>../icons/moon.png</iconset>
+     <normaloff>../../../../../../.designer/icons/moon.png</normaloff>../../../../../../.designer/icons/moon.png</iconset>
    </property>
    <property name="text">
     <string>Dark Mode</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
    </property>
   </action>
   <action name="actionAbout">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/info.png</normaloff>../icons/info.png</iconset>
+     <normaloff>../../../../../../.designer/icons/info.png</normaloff>../../../../../../.designer/icons/info.png</iconset>
    </property>
    <property name="text">
     <string>About Buttonbox</string>
@@ -737,7 +756,7 @@
   <action name="actionOpen_GitHub">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/github.png</normaloff>../icons/github.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../.designer/icons/github.png</normaloff>../../../../../../../../../../../../../../.designer/icons/github.png</iconset>
    </property>
    <property name="text">
     <string>Open GitHub</string>
@@ -746,10 +765,19 @@
   <action name="actionOpen_Source_Licenses">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/code.png</normaloff>../icons/code.png</iconset>
+     <normaloff>../../../../../../../../../../../../../../.designer/icons/code.png</normaloff>../../../../../../../../../../../../../../.designer/icons/code.png</iconset>
    </property>
    <property name="text">
     <string>Open Source Licenses</string>
+   </property>
+  </action>
+  <action name="actionRefresh_Ports">
+   <property name="icon">
+    <iconset>
+     <normaloff>../../../../../../.designer/icons/refresh-cw.png</normaloff>../../../../../../.designer/icons/refresh-cw.png</iconset>
+   </property>
+   <property name="text">
+    <string>Refresh Ports</string>
    </property>
   </action>
  </widget>

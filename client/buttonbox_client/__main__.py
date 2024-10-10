@@ -50,7 +50,6 @@ def main():
     baudrate = config.get_config_value("baudrate")
     conn = Connection(port, baudrate, config.log, config.log_mc)
     app, win = launch_gui(conn)
-    win.hide()
     tray_icon = Image.open(Path(__file__).parent / "icons" / "cube-icon.png")
 
     def show_gui(_):
@@ -75,6 +74,7 @@ def main():
     )
 
     icon.run_detached()
+    win.hide()
     code = app.exec()
     icon.stop()
     sys.exit(code)

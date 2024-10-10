@@ -92,11 +92,14 @@ class Window(QMainWindow, Ui_MainWindow):
         self.refreshPorts()
 
     def refreshPorts(self):
+        prev_selected = self.menuPort.activeAction()
         self.menuPort.clear()
         for port in sorted(comports()):
             action = QAction(port[0])
             self.menuPort.addAction(action)
             action.setCheckable(True)
+            if prev_selected and prev_selected.text() == port[0]:
+                action.activate(QAction.ActionEvent.Trigger)
             action.changed.connect(partial(self.port_selected, action))
 
     def select_default_port(self):
@@ -108,6 +111,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def port_selected(self, selected_action: QAction):
         # selected_action is provided by partial
+        self.conn.port = selected_action.text()
+        self.conn.reconnect()
         checked = False
         for action in self.menuPort.actions():
             if action == selected_action:
@@ -121,6 +126,7 @@ class Window(QMainWindow, Ui_MainWindow):
                     action.setChecked(False)
 
     def connectSignalsSlots(self):
+        self.actionRefresh_Ports.triggered.connect(self.refreshPorts)
         self.actionRun_in_Background.triggered.connect(self.close)
         self.actionQuit.triggered.connect(self.full_quit)
         self.actionSettings.triggered.connect(self.settings)
