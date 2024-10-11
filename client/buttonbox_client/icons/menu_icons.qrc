@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>refresh-cw.png</file>
     <file>code.png</file>
     <file>cube-icon.png</file>
     <file>users.png</file>
