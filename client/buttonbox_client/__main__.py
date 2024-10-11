@@ -14,8 +14,8 @@ try:
     from . import config
     from .gui import launch_gui
 except ImportError:
-    import config
-    from gui import launch_gui
+    import config  # type: ignore[no-redef]
+    from gui import launch_gui  # type: ignore[no-redef]
 
 
 class Connection:
@@ -24,7 +24,7 @@ class Connection:
         port: str,
         baudrate: int,
         log: Callable[[str, str], None],
-        log_mc: Callable[[str, str], None],
+        log_mc: Callable[[str], None],
     ) -> None:
         self.port = port
         self.baudrate = baudrate
@@ -40,10 +40,14 @@ class Connection:
         self.status_button_matrix: Callable[
             [list[list[int]]], None] = lambda _: None
         self.status_button_single: Callable[[int], None] = lambda _: None
+        self.mc_debug: Callable[[str], None] = lambda _: None
+        self.mc_warning: Callable[[str], None] = lambda _: None
+        self.mc_error: Callable[[str], None] = lambda _: None
+        self.mc_critical: Callable[[str], None] = lambda _: None
 
     def run(self) -> None:
         while True:
-            if not self.connected:
+            if not self.ser or not self.connected:
                 if not self.reconnect():
                     time.sleep(0.01)
                 break
@@ -86,6 +90,18 @@ class Connection:
                 elif task[2] == "SINGLE":
                     state = task[3]
                     self.status_button_single(int(state))
+        elif task[0] == "DEBUG":
+            self.mc_debug(task[1:])
+            config.log_mc(line)
+        elif task[0] == "WARNING":
+            self.mc_warning(task[1:])
+            config.log_mc(line)
+        elif task[0] == "ERROR":
+            self.mc_error(task[1:])
+            config.log_mc(line)
+        elif task[0] == "CRITICAL":
+            self.mc_critical(task[1:])
+            config.log_mc(line)
 
     def connect(self) -> bool:
         try:
@@ -106,17 +122,17 @@ class Connection:
         return self.connect()
 
 
-def main():
+def main() -> None:
     port = config.get_config_value("default_port")
     baudrate = config.get_config_value("baudrate")
     conn = Connection(port, baudrate, config.log, config.log_mc)
     app, win = launch_gui(conn)
     tray_icon = Image.open(Path(__file__).parent / "icons" / "cube-icon.png")
 
-    def show_gui(_):
+    def show_gui(_) -> None:  # type: ignore[no-untyped-def]
         win.show()
 
-    def quit_app(_):
+    def quit_app(_) -> None:  # type: ignore[no-untyped-def]
         conn.close()
         win.close()
         app.quit()
@@ -142,7 +158,7 @@ def main():
     try:
         code = app.exec()
     except Exception as e:
-        config.log(e, "CRITICAL")
+        config.log(str(e), "CRITICAL")
         traceback.print_exc(file=config.LogStream("TRACE"))
 
     icon.stop()

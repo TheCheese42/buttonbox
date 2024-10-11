@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from PyQt6.QtCore import QStandardPaths
 
@@ -21,16 +22,16 @@ DEFAULT_CONFIG = {
 }
 
 
-def config_exists():
+def config_exists() -> bool:
     return CONFIG_PATH.exists()
 
 
-def create_app_dir():
+def create_app_dir() -> None:
     if not CONFIG_DIR.exists():
         CONFIG_DIR.mkdir()
 
 
-def trunc_log():
+def trunc_log() -> None:
     with open(LOGGER_PATH, "w") as fp:
         fp.write("")
 
@@ -38,7 +39,7 @@ def trunc_log():
         fp.write("")
 
 
-def init_config():
+def init_config() -> None:
     create_app_dir()
     trunc_log()
 
@@ -47,17 +48,18 @@ def init_config():
             json.dump(DEFAULT_CONFIG, fp)
 
 
-def _get_config() -> dict:
+def _get_config() -> dict[str, Any]:
     with open(CONFIG_PATH, "r", encoding="utf-8") as fp:
-        return json.load(fp)
+        conf: dict[str, Any] = json.load(fp)
+        return conf
 
 
-def _overwrite_config(config: dict):
+def _overwrite_config(config: dict[str, Any]) -> None:
     with open(CONFIG_PATH, "w", encoding="utf-8") as fp:
         json.dump(config, fp)
 
 
-def get_config_value(key: str):
+def get_config_value(key: str) -> Any:
     try:
         val = _get_config()[key]
     except KeyError:
@@ -65,18 +67,18 @@ def get_config_value(key: str):
     return val
 
 
-def set_config_value(key: str, value: str):
+def set_config_value(key: str, value: str) -> None:
     config = _get_config()
     config[key] = value
     _overwrite_config(config)
 
 
-def log(msg: str, level: str = "INFO"):
+def log(msg: str, level: str = "INFO") -> None:
     with open(LOGGER_PATH, "a", encoding="utf-8") as fp:
         fp.write(f"[{level}] [{datetime.now().isoformat()}] {msg}\n")
 
 
-def log_mc(msg: str):
+def log_mc(msg: str) -> None:
     with open(MC_DEBUG_LOG_PATH, "a", encoding="utf-8") as fp:
         fp.write(f"[{datetime.now().isoformat()}] {msg}\n")
 

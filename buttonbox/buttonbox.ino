@@ -64,10 +64,10 @@ void setup() {
 
 
   Serial.begin(115200);
-  Serial.println("BUTTONBOX - SETUP");
+  Serial.println("DEBUG BUTTONBOX - SETUP");
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println(F("Failed to start SSD1306 OLED Display"));
+    Serial.println(F("DEBUG Failed to start SSD1306 OLED Display"));
     while (1);
   }
 
