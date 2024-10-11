@@ -79,3 +79,11 @@ def log(msg: str, level: str = "INFO"):
 def log_mc(msg: str):
     with open(MC_DEBUG_LOG_PATH, "a", encoding="utf-8") as fp:
         fp.write(f"[{datetime.now().isoformat()}] {msg}\n")
+
+
+class LogStream:
+    def __init__(self, level: str = "INFO") -> None:
+        self.level = level
+
+    def write(self, text: str) -> None:
+        log(text, self.level)

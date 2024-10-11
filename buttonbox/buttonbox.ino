@@ -81,10 +81,10 @@ void setup() {
   display.println("Waiting for HANDSHAKE byte...");
   display.display();
   while (true) {
-    Serial.write("HANDSHAKE");
     if (Serial.available() > 0) {
       String receivedData = Serial.readStringUntil('\n');
       if (receivedData == "HANDSHAKE") {
+        Serial.println("HANDSHAKE");
         break;
       }
     }
