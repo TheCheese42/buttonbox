@@ -300,7 +300,7 @@ class Settings(QDialog, Ui_Settings):  # type: ignore[misc]
         self.baudrateSpin.setValue(config.get_config_value("baudrate"))
 
 
-def launch_gui(conn: Connection) -> tuple[QApplication, Window]:
+def launch_gui(conn: "Connection") -> tuple[QApplication, Window]:
     app = QApplication(sys.argv)
     app.setApplicationName("Buttonbox Client")
     app.setApplicationDisplayName("Buttonbox Client")
