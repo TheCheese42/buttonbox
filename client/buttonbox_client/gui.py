@@ -5,6 +5,7 @@ from functools import partial
 from subprocess import getoutput
 from typing import TYPE_CHECKING, Any
 
+from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QAction, QCloseEvent
 from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QWidget
 from serial.tools.list_ports import comports
@@ -87,10 +88,18 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         print(self.styleSheet())
         self.apply_dark()
 
+        self.updateMainWidgetTimer = QTimer(self)
+        self.updateMainWidgetTimer.timeout.connect(self.updateMainWidget)
+        self.updateMainWidgetTimer.start(100)
+
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
         self.setMinimumSize(self.size())
         self.refreshPorts()
+        self.updateMainWidget()
+
+    def updateMainWidget(self):
+        self
 
     def refreshPorts(self) -> None:
         prev_selected = self.menuPort.activeAction()
@@ -128,6 +137,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
     def connectSignalsSlots(self) -> None:
         self.actionRefresh_Ports.triggered.connect(self.refreshPorts)
+        self.actionPause.triggered.connect(self.toggle_pause)
         self.actionRun_in_Background.triggered.connect(self.close)
         self.actionQuit.triggered.connect(self.full_quit)
         self.actionSettings.triggered.connect(self.settings)
@@ -137,10 +147,17 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.actionMicrocontroller_Debug_Log.triggered.connect(
             self.mcdebug_log
         )
+        self.actionExport_Serial_History.triggered.connect(
+            self.export_open_serial_history
+        )
         self.actionAbout.triggered.connect(self.about)
         self.actionOpen_GitHub.triggered.connect(self.open_github)
         self.actionOpen_Source_Licenses.triggered.connect(self.licenses)
         self.actionDark_Mode.changed.connect(self.dark_mode)
+
+    def toggle_pause(self) -> None:
+        paused = self.actionPause.isChecked()
+        self.conn.paused = paused
 
     def dark_mode(self) -> None:
         dark = self.actionDark_Mode.isChecked()
@@ -178,7 +195,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         dialog.exec()
 
     def serial_monitor(self) -> None:
-        dialog = SerialMonitor(self)
+        dialog = SerialMonitor(self, self.conn)
         dialog.exec()
 
     def settings(self) -> None:
@@ -218,6 +235,19 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 getoutput(f"start {config.LOGGER_PATH}")
             else:
                 getoutput(f"open {config.LOGGER_PATH}")
+
+    def export_open_serial_history(self) -> None:
+        with open(config.SER_HISTORY_PATH, "w", encoding="utf-8") as fp:
+            fp.writelines(self.conn.full_history)
+
+        try:
+            webbrowser.WindowsDefault().open(str(config.SER_HISTORY_PATH))  # type: ignore[attr-defined]  # noqa
+        except Exception:
+            system = platform.system()
+            if system == "Windows":
+                getoutput(f"start {config.SER_HISTORY_PATH}")
+            else:
+                getoutput(f"open {config.SER_HISTORY_PATH}")
 
     def mcdebug_log(self) -> None:
         try:
@@ -273,12 +303,38 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
 
 
 class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
-    def __init__(self, parent: QWidget):
+    def __init__(self, parent: QWidget, conn: "Connection"):
         super().__init__(parent)
         self.setupUi(self)
+        self.connectSignalsSlots()
+        self.conn = conn
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.refresh)
+        self.timer.start(50)
+        self.from_index = 0
+
+    def connectSignalsSlots(self) -> None:
+        self.enterBtn.clicked.connect(self.enter)
+        self.clearBtn.clicked.connect(self.clear)
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
+        self.monitorText.clear()
+
+    def refresh(self) -> None:
+        self.monitorText.clear()
+        history = self.conn.in_history.copy()
+        history.append("")
+        self.monitorText.setPlainText("\n".join(history[self.from_index:]))
+
+    def enter(self) -> None:
+        cmd = self.cmdEdit.text()
+        if cmd:
+            self.conn.write_queue.append(cmd)
+
+    def clear(self) -> None:
+        self.from_index = len(self.conn.in_history)
+        self.refresh()
 
 
 class Settings(QDialog, Ui_Settings):  # type: ignore[misc]

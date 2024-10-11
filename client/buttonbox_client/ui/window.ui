@@ -605,6 +605,8 @@
     <addaction name="actionRefresh_Ports"/>
     <addaction name="menuPort"/>
     <addaction name="separator"/>
+    <addaction name="actionPause"/>
+    <addaction name="separator"/>
     <addaction name="actionRun_in_Background"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -623,6 +625,7 @@
     <addaction name="separator"/>
     <addaction name="actionLog"/>
     <addaction name="actionMicrocontroller_Debug_Log"/>
+    <addaction name="actionExport_Serial_History"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -659,6 +662,9 @@
    <property name="text">
     <string>Run in Background</string>
    </property>
+   <property name="toolTip">
+    <string>Run in Background. Access through the System Tray.</string>
+   </property>
   </action>
   <action name="actionQuit">
    <property name="icon">
@@ -668,6 +674,9 @@
    <property name="text">
     <string>Quit</string>
    </property>
+   <property name="toolTip">
+    <string>Completely quit the Application</string>
+   </property>
   </action>
   <action name="actionSettings">
    <property name="icon">
@@ -676,6 +685,9 @@
    </property>
    <property name="text">
     <string>Settings...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Settings Menu</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -689,6 +701,9 @@
    <property name="text">
     <string>Profiles...</string>
    </property>
+   <property name="toolTip">
+    <string>Open Profiles Menu</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
    </property>
@@ -700,6 +715,9 @@
    </property>
    <property name="text">
     <string>Serial Monitor</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the Serial Monitor</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
@@ -713,6 +731,9 @@
    <property name="text">
     <string>Log</string>
    </property>
+   <property name="toolTip">
+    <string>Open the Log file in your OS default Text Editor</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
    </property>
@@ -724,6 +745,9 @@
    </property>
    <property name="text">
     <string>Microcontroller Debug Log</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the Microcontroller Debug Log in your OS default Text Editor</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+K</string>
@@ -740,6 +764,9 @@
    <property name="text">
     <string>Dark Mode</string>
    </property>
+   <property name="toolTip">
+    <string>Toggle Dark Mode</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
    </property>
@@ -752,6 +779,9 @@
    <property name="text">
     <string>About Buttonbox</string>
    </property>
+   <property name="toolTip">
+    <string>About Buttonbox</string>
+   </property>
   </action>
   <action name="actionOpen_GitHub">
    <property name="icon">
@@ -760,6 +790,9 @@
    </property>
    <property name="text">
     <string>Open GitHub</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the GitHub Repository in your default Web Browser</string>
    </property>
   </action>
   <action name="actionOpen_Source_Licenses">
@@ -770,6 +803,9 @@
    <property name="text">
     <string>Open Source Licenses</string>
    </property>
+   <property name="toolTip">
+    <string>Display Open Source Licenses</string>
+   </property>
   </action>
   <action name="actionRefresh_Ports">
    <property name="icon">
@@ -778,6 +814,39 @@
    </property>
    <property name="text">
     <string>Refresh Ports</string>
+   </property>
+   <property name="toolTip">
+    <string>Refresh the list of Serial Ports</string>
+   </property>
+  </action>
+  <action name="actionPause">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/pause-circle.png</normaloff>:/icons/pause-circle.png</iconset>
+   </property>
+   <property name="text">
+    <string>Pause</string>
+   </property>
+   <property name="toolTip">
+    <string>Halts all action. When unpaused, all command that were queued during the pause are sent at once.</string>
+   </property>
+   <property name="statusTip">
+    <string/>
+   </property>
+  </action>
+  <action name="actionExport_Serial_History">
+   <property name="icon">
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/clock.png</normaloff>:/icons/clock.png</iconset>
+   </property>
+   <property name="text">
+    <string>Export Serial History</string>
+   </property>
+   <property name="toolTip">
+    <string>Export and open full Serial History</string>
    </property>
   </action>
  </widget>

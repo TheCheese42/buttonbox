@@ -13,6 +13,7 @@ CONFIG_DIR = Path(
 CONFIG_PATH = CONFIG_DIR / ".config.json"
 LOGGER_PATH = CONFIG_DIR / "latest.log"
 MC_DEBUG_LOG_PATH = CONFIG_DIR / "mcdebug.log"
+SER_HISTORY_PATH = CONFIG_DIR / "serial_history.log"
 
 DEFAULT_CONFIG = {
     "dark": False,

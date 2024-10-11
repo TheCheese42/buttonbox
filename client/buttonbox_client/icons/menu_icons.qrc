@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file>clock.png</file>
+    <file>pause-circle.png</file>
     <file>refresh-cw.png</file>
     <file>code.png</file>
     <file>cube-icon.png</file>

@@ -35,6 +35,11 @@ class Connection:
         self.handshaked = False
         self.write_queue: deque[str] = deque()
 
+        self.paused = True
+        self.in_history: list[str] = []
+        self.out_history: list[str] = []
+        self.full_history: list[str] = []
+
         self.rotary_encoder_clockwise: Callable[[], None] = lambda: None
         self.rotary_encoder_counterclockwise: Callable[[], None] = lambda: None
         self.status_button_matrix: Callable[
@@ -47,6 +52,10 @@ class Connection:
 
     def run(self) -> None:
         while True:
+            if self.paused:
+                time.sleep(0.01)
+                return
+
             if not self.ser or not self.connected:
                 if not self.reconnect():
                     time.sleep(0.01)
@@ -64,12 +73,23 @@ class Connection:
                 break
 
             # We are connected and got a handshake
+
             if self.write_queue:
-                self.ser.write(self.write_queue.pop().encode("utf-8") + b"\n")
+                cmd = self.write_queue.popleft()
+                self.ser.write(cmd.encode(
+                    "utf-8") + b"\n")
+                self.out_history.append(cmd)
+                self.full_history.append(f"[OUT] {cmd}")
 
             if self.ser.in_waiting > 0:
                 line = self.ser.read_until().decode("utf-8")
+                self.in_history.append(line)
+                self.full_history.append(f"[IN]  {line}")
                 self.process_task(line)
+
+    def disconnect(self) -> None:
+        self.connected = False
+        self.handshaked = False
 
     def process_task(self, line: str) -> None:
         task = line.split(" ")
