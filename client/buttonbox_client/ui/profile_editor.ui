@@ -14,8 +14,8 @@
    <string>Profile Editor</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>../icons/cube-icon.png</normaloff>../icons/cube-icon.png</iconset>
+   <iconset resource="../icons/menu_icons.qrc">
+    <normaloff>:/icons/users.png</normaloff>:/icons/users.png</iconset>
   </property>
   <widget class="Line" name="line">
    <property name="geometry">
@@ -523,7 +523,9 @@
    </layout>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../icons/menu_icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

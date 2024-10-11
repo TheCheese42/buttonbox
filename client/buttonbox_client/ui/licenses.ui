@@ -14,8 +14,8 @@
    <string>Open Source Licenses</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>../icons/cube-icon.png</normaloff>../icons/cube-icon.png</iconset>
+   <iconset resource="../icons/menu_icons.qrc">
+    <normaloff>:/icons/code.png</normaloff>:/icons/code.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -186,7 +186,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../icons/menu_icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>ok_btn</sender>

@@ -14,8 +14,8 @@
    <string>Buttonbox Client</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>../../../../../../../../../../../../../../.designer/icons/cube-icon.png</normaloff>../../../../../../../../../../../../../../.designer/icons/cube-icon.png</iconset>
+   <iconset resource="../icons/menu_icons.qrc">
+    <normaloff>:/icons/cube-icon.png</normaloff>:/icons/cube-icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -597,8 +597,8 @@
       <string>Port</string>
      </property>
      <property name="icon">
-      <iconset>
-       <normaloff>../../../../../../.designer/icons/hard-drive.png</normaloff>../../../../../../.designer/icons/hard-drive.png</iconset>
+      <iconset resource="../icons/menu_icons.qrc">
+       <normaloff>:/icons/hard-drive.png</normaloff>:/icons/hard-drive.png</iconset>
      </property>
      <addaction name="actionPort_1"/>
     </widget>
@@ -653,8 +653,8 @@
   </action>
   <action name="actionRun_in_Background">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/arrow-down.png</normaloff>../../../../../../.designer/icons/arrow-down.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/arrow-down.png</normaloff>:/icons/arrow-down.png</iconset>
    </property>
    <property name="text">
     <string>Run in Background</string>
@@ -662,8 +662,8 @@
   </action>
   <action name="actionQuit">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/power.png</normaloff>../../../../../../.designer/icons/power.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/power.png</normaloff>:/icons/power.png</iconset>
    </property>
    <property name="text">
     <string>Quit</string>
@@ -671,8 +671,8 @@
   </action>
   <action name="actionSettings">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/settings.png</normaloff>../../../../../../.designer/icons/settings.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
    </property>
    <property name="text">
     <string>Settings...</string>
@@ -683,8 +683,8 @@
   </action>
   <action name="actionProfiles">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/users.png</normaloff>../../../../../../.designer/icons/users.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/users.png</normaloff>:/icons/users.png</iconset>
    </property>
    <property name="text">
     <string>Profiles...</string>
@@ -695,8 +695,8 @@
   </action>
   <action name="actionSerial_Monitor">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/monitor.png</normaloff>../../../../../../.designer/icons/monitor.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/monitor.png</normaloff>:/icons/monitor.png</iconset>
    </property>
    <property name="text">
     <string>Serial Monitor</string>
@@ -707,8 +707,8 @@
   </action>
   <action name="actionLog">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/file-text.png</normaloff>../../../../../../.designer/icons/file-text.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/file-text.png</normaloff>:/icons/file-text.png</iconset>
    </property>
    <property name="text">
     <string>Log</string>
@@ -719,8 +719,8 @@
   </action>
   <action name="actionMicrocontroller_Debug_Log">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/tool.png</normaloff>../../../../../../.designer/icons/tool.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/tool.png</normaloff>:/icons/tool.png</iconset>
    </property>
    <property name="text">
     <string>Microcontroller Debug Log</string>
@@ -734,8 +734,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/moon.png</normaloff>../../../../../../.designer/icons/moon.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/moon.png</normaloff>:/icons/moon.png</iconset>
    </property>
    <property name="text">
     <string>Dark Mode</string>
@@ -746,8 +746,8 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/info.png</normaloff>../../../../../../.designer/icons/info.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/info.png</normaloff>:/icons/info.png</iconset>
    </property>
    <property name="text">
     <string>About Buttonbox</string>
@@ -755,8 +755,8 @@
   </action>
   <action name="actionOpen_GitHub">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../../../../../../../../../.designer/icons/github.png</normaloff>../../../../../../../../../../../../../../.designer/icons/github.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/github.png</normaloff>:/icons/github.png</iconset>
    </property>
    <property name="text">
     <string>Open GitHub</string>
@@ -764,8 +764,8 @@
   </action>
   <action name="actionOpen_Source_Licenses">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../../../../../../../../../.designer/icons/code.png</normaloff>../../../../../../../../../../../../../../.designer/icons/code.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/code.png</normaloff>:/icons/code.png</iconset>
    </property>
    <property name="text">
     <string>Open Source Licenses</string>
@@ -773,8 +773,8 @@
   </action>
   <action name="actionRefresh_Ports">
    <property name="icon">
-    <iconset>
-     <normaloff>../../../../../../.designer/icons/refresh-cw.png</normaloff>../../../../../../.designer/icons/refresh-cw.png</iconset>
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/refresh-cw.png</normaloff>:/icons/refresh-cw.png</iconset>
    </property>
    <property name="text">
     <string>Refresh Ports</string>

@@ -14,8 +14,8 @@
    <string>Serial Monitor</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>../icons/monitor.png</normaloff>../icons/monitor.png</iconset>
+   <iconset resource="../icons/menu_icons.qrc">
+    <normaloff>:/icons/monitor.png</normaloff>:/icons/monitor.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item alignment="Qt::AlignHCenter">
@@ -108,6 +108,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../icons/menu_icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

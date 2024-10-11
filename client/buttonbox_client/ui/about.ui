@@ -14,8 +14,8 @@
    <string>About Buttonbox</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>../icons/cube-icon.png</normaloff>../icons/cube-icon.png</iconset>
+   <iconset resource="../icons/menu_icons.qrc">
+    <normaloff>:/icons/info.png</normaloff>:/icons/info.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item alignment="Qt::AlignHCenter">
@@ -114,7 +114,9 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../icons/menu_icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>quitBtn</sender>

@@ -2,7 +2,6 @@ import platform
 import sys
 import webbrowser
 from functools import partial
-# XXX from pathlib import Path
 from subprocess import getoutput
 from typing import TYPE_CHECKING
 
@@ -11,6 +10,7 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow
 from serial.tools.list_ports import comports
 
 try:
+    from .icons import resource  # noqa
     from .ui.about_ui import Ui_About
     from .ui.licenses_ui import Ui_Licenses
     from .ui.profile_editor_ui import Ui_ProfileEditor
@@ -19,6 +19,7 @@ try:
     from .ui.settings_ui import Ui_Settings
     from .ui.window_ui import Ui_MainWindow
 except ImportError:
+    from icons import resource  # noqa
     from ui.about_ui import Ui_About
     from ui.licenses_ui import Ui_Licenses
     from ui.profile_editor_ui import Ui_ProfileEditor
