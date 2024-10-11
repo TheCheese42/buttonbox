@@ -16,6 +16,8 @@ Everything that needs to be adapted is marked with a `# ADAPT` comment. It needs
 
 The PC client is found it `/client` and is implemented as a PyQt6 application that runs in the background all the time (can be stopped from the GUI under `File -> Quit`).
 
+![image](/screenshots/client_main.png)
+
 ### Build
 
 First compile UI and icons by executing the `/client/compile-ui.sh` and `/client/compile-icons.sh` files. While those are Linux shell files, the client itself is cross-platform.
