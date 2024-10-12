@@ -129,14 +129,11 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def populate_port_combo(self) -> None:
         self.profileCombo.clear()
         default_port = config.get_config_value("default_port")
-        actions: list[QAction] = []
         for i, port in enumerate(sorted(comports())):
-            action = QAction(port[0])
-            actions.append(action)
+            self.profileCombo.addItem(port[0])
             if port[0] == default_port or i == 0:
                 # If default is not in list, fallback to index 0
                 self.profileCombo.setCurrentIndex(i)
-        self.profileCombo.addActions(actions)
 
     def refreshPorts(self) -> None:
         prev_selected = self.menuPort.activeAction()
@@ -178,7 +175,6 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.conn.reconnect()
 
         if not self.main_widget_detected:
-            self.populate_port_combo()
             for i, action in enumerate(self.profileCombo.actions()):
                 if action.text() == port:
                     self.profileCombo.setCurrentIndex(i)
