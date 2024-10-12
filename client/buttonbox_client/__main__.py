@@ -111,16 +111,16 @@ class Connection:
                     state = task[3]
                     self.status_button_single(int(state))
         elif task[0] == "DEBUG":
-            self.mc_debug(task[1:])
+            self.mc_debug(" ".join(task[1:]))
             config.log_mc(line)
         elif task[0] == "WARNING":
-            self.mc_warning(task[1:])
+            self.mc_warning(" ".join(task[1:]))
             config.log_mc(line)
         elif task[0] == "ERROR":
-            self.mc_error(task[1:])
+            self.mc_error(" ".join(task[1:]))
             config.log_mc(line)
         elif task[0] == "CRITICAL":
-            self.mc_critical(task[1:])
+            self.mc_critical(" ".join(task[1:]))
             config.log_mc(line)
 
     def connect(self) -> bool:

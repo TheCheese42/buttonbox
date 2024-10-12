@@ -98,7 +98,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.refreshPorts()
         self.updateMainWidget()
 
-    def updateMainWidget(self):
+    def updateMainWidget(self) -> None:
         self
 
     def refreshPorts(self) -> None:
@@ -170,12 +170,13 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.dark_stylesheet if dark else self.light_stylesheet
         )
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:  # type: ignore[override]
         event.ignore()
         self.close()
 
-    def close(self) -> None:
+    def close(self) -> bool:
         self.hide()
+        return False
 
     def full_quit(self) -> None:
         self.conn.close()
