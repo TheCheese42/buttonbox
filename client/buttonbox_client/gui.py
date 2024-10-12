@@ -6,12 +6,12 @@ from subprocess import getoutput
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QAction, QCloseEvent
+from PyQt6.QtGui import QAction, QCloseEvent, QColor
 from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QWidget
 from serial.tools.list_ports import comports
 
 try:
-    from .icons import resource  # noqa
+    from .icons import resource as _  # noqa
     from .ui.about_ui import Ui_About
     from .ui.licenses_ui import Ui_Licenses
     from .ui.profile_editor_ui import Ui_ProfileEditor
@@ -20,7 +20,7 @@ try:
     from .ui.settings_ui import Ui_Settings
     from .ui.window_ui import Ui_MainWindow
 except ImportError:
-    from icons import resource  # noqa
+    from icons import resource as _  # noqa
     from ui.about_ui import Ui_About
     from ui.licenses_ui import Ui_Licenses
     from ui.profile_editor_ui import Ui_ProfileEditor
@@ -46,6 +46,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def __init__(self, conn: "Connection") -> None:
         super().__init__(None)
         self.conn = conn
+        self.main_widget_detected = False
         self.setupUi(self)
         self.select_default_port()
 
@@ -90,7 +91,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         self.updateMainWidgetTimer = QTimer(self)
         self.updateMainWidgetTimer.timeout.connect(self.updateMainWidget)
-        self.updateMainWidgetTimer.start(100)
+        self.updateMainWidgetTimer.start(1000)
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
@@ -99,11 +100,49 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.updateMainWidget()
 
     def updateMainWidget(self) -> None:
-        self
+        if self.conn.handshaked:
+            self.main_widget_detected = True
+            self.statusLabel.setText("Detected")
+            self.statusLabel.palette().windowText().setColor(
+                QColor.fromRgb(50, 180, 10)
+            )
+            self.profileLabel.setText("Profile:")
+            self.profileCombo.setPlaceholderText("Select Profile")
+            self.populate_profile_combo()
+            self.testCheckBox.setEnabled(True)
+        else:
+            self.main_widget_detected = False
+            self.statusLabel.setText("Undetected")
+            self.statusLabel.palette().windowText().setColor(
+                QColor.fromRgb(240, 50, 30)
+            )
+            self.profileLabel.setText("Port:")
+            self.profileCombo.setPlaceholderText("Select Port")
+            self.populate_port_combo()
+            self.testCheckBox.setEnabled(False)
+            self.testCheckBox.setChecked(False)
+        self.test_check_box_changed()
+
+    def populate_profile_combo(self) -> None:
+        self.profileCombo.clear()  # TODO
+
+    def populate_port_combo(self) -> None:
+        self.profileCombo.clear()
+        default_port = config.get_config_value("default_port")
+        actions: list[QAction] = []
+        for i, port in enumerate(sorted(comports())):
+            action = QAction(port[0])
+            actions.append(action)
+            if port[0] == default_port or i == 0:
+                # If default is not in list, fallback to index 0
+                self.profileCombo.setCurrentIndex(i)
+        self.profileCombo.addActions(actions)
 
     def refreshPorts(self) -> None:
         prev_selected = self.menuPort.activeAction()
         self.menuPort.clear()
+        if not self.main_widget_detected:
+            self.populate_port_combo()
         for port in sorted(comports()):
             action = QAction(port[0])
             self.menuPort.addAction(action)
@@ -121,8 +160,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
     def port_selected(self, selected_action: QAction) -> None:
         # selected_action is provided by partial
-        self.conn.port = selected_action.text()
-        self.conn.reconnect()
+        self.set_port(selected_action.text())
         checked = False
         for action in self.menuPort.actions():
             if action == selected_action:
@@ -135,7 +173,43 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 if action != selected_action:
                     action.setChecked(False)
 
+    def set_port(self, port: str) -> None:
+        self.conn.port = port
+        self.conn.reconnect()
+
+        if not self.main_widget_detected:
+            self.populate_port_combo()
+            for i, action in enumerate(self.profileCombo.actions()):
+                if action.text() == port:
+                    self.profileCombo.setCurrentIndex(i)
+
+    def profile_port_box_changed(self) -> None:
+        text = self.profileCombo.currentText()
+        if self.main_widget_detected:
+            self.set_profile(text)  # TODO
+        else:
+            self.set_port(text)
+
+    def test_check_box_changed(self) -> None:
+        value = self.testCheckBox.isChecked()
+        if value == self.conn.test_mode:
+            return
+        if value:
+            self.conn.test_mode = True
+            self.testModeFrame.setEnabled(True)
+        else:
+            self.conn.test_mode = False
+            if self.conn.connected:
+                self.conn.ser.read_all()
+            self.conn.write_queue.clear()
+            self.testModeFrame.setEnabled(False)
+
     def connectSignalsSlots(self) -> None:
+        self.profileCombo.currentTextChanged.connect(
+            self.profile_port_box_changed
+        )
+        self.testCheckBox.stateChanged.connect(self.test_check_box_changed)
+
         self.actionRefresh_Ports.triggered.connect(self.refreshPorts)
         self.actionPause.triggered.connect(self.toggle_pause)
         self.actionRun_in_Background.triggered.connect(self.close)

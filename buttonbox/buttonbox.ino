@@ -185,7 +185,9 @@ void execDisplayTask(String task) {
 
 
 void execTask(String task) {
-  if (task.startsWith("digital HIGH")) {
+  if (task.startsWith("HANDSHAKE")) {
+    Serial.println("HANDSHAKE");
+  } else if (task.startsWith("digital HIGH")) {
     int num = task.substring(13).toInt();
     digitalWrite(num, HIGH);
   } else if (task.startsWith("digital LOW")) {

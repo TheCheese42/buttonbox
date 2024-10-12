@@ -36,6 +36,7 @@ class Connection:
         self.write_queue: deque[str] = deque()
 
         self.paused = True
+        self.test_mode = False
         self.in_history: list[str] = []
         self.out_history: list[str] = []
         self.full_history: list[str] = []
@@ -74,14 +75,14 @@ class Connection:
 
             # We are connected and got a handshake
 
-            if self.write_queue:
+            if self.write_queue and not self.test_mode:
                 cmd = self.write_queue.popleft()
                 self.ser.write(cmd.encode(
                     "utf-8") + b"\n")
                 self.out_history.append(cmd)
                 self.full_history.append(f"[OUT] {cmd}")
 
-            if self.ser.in_waiting > 0:
+            if self.ser.in_waiting > 0 and not self.test_mode:
                 line = self.ser.read_until().decode("utf-8")
                 self.in_history.append(line)
                 self.full_history.append(f"[IN]  {line}")
@@ -131,6 +132,7 @@ class Connection:
         except serial.SerialException as e:
             self.connected = False
             self.log(f"Failed to connect to serial port ({e})", "DEBUG")
+        self.handshaked = False
         return self.connected
 
     def close(self) -> None:

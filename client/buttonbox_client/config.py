@@ -1,4 +1,5 @@
 import json
+import platform
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -14,10 +15,11 @@ CONFIG_PATH = CONFIG_DIR / ".config.json"
 LOGGER_PATH = CONFIG_DIR / "latest.log"
 MC_DEBUG_LOG_PATH = CONFIG_DIR / "mcdebug.log"
 SER_HISTORY_PATH = CONFIG_DIR / "serial_history.log"
+PROFILES_PATH = CONFIG_DIR / "profiles"
 
 DEFAULT_CONFIG = {
     "dark": False,
-    "default_port": None,
+    "default_port": "COM0" if platform.system() == "Windows" else "/dev/ttyS0",
     "active_profile": "default",
     "baudrate": 9600,
 }
