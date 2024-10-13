@@ -66,7 +66,9 @@ class Connection:
                 self.ser.write(b"HANDSHAKE\n")
                 for _ in range(100):
                     if self.ser.in_waiting > 0:
-                        if self.ser.read_until() == b"HANDSHAKE":
+                        if self.ser.read_until().decode("utf-8").startswith(
+                            "HANDSHAKE"
+                        ):
                             self.handshaked = True
                             break
                 else:
