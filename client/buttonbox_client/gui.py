@@ -95,6 +95,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
+        self.populate_port_combo(select_default=True)
         self.setMinimumSize(self.size())
         self.refreshPorts()
         self.updateMainWidget()
@@ -126,13 +127,23 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def populate_profile_combo(self) -> None:
         self.profileCombo.clear()  # TODO
 
-    def populate_port_combo(self) -> None:
+    def populate_port_combo(self, select_default: bool = False) -> None:
+        prev_items = [
+            self.profileCombo.itemText(i) for i in range(
+                self.profileCombo.count()
+            )
+        ]
+        if prev_items == [i[0] for i in sorted(comports())]:
+            return  # Nothing changed
+        prev_text = self.profileCombo.currentText()
         self.profileCombo.clear()
         default_port = config.get_config_value("default_port")
         for i, port in enumerate(sorted(comports())):
             self.profileCombo.addItem(port[0])
-            if port[0] == default_port or i == 0:
+            if (port[0] == default_port or i == 0) and select_default:
                 # If default is not in list, fallback to index 0
+                self.profileCombo.setCurrentIndex(i)
+            elif port[0] == prev_text and not select_default:
                 self.profileCombo.setCurrentIndex(i)
 
     def refreshPorts(self) -> None:
