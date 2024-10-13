@@ -21,7 +21,7 @@ DEFAULT_CONFIG = {
     "dark": False,
     "default_port": "COM0" if platform.system() == "Windows" else "/dev/ttyS0",
     "active_profile": "default",
-    "baudrate": 9600,
+    "baudrate": 115200,
 }
 
 
