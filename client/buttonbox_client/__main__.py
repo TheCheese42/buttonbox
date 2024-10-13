@@ -35,7 +35,7 @@ class Connection:
         self.handshaked = False
         self.write_queue: deque[str] = deque()
 
-        self.paused = True
+        self.paused = False
         self.test_mode = False
         self.in_history: list[str] = []
         self.out_history: list[str] = []
