@@ -108,7 +108,7 @@ class Connection:
                     status = task[3]
                     matrix = []
                     for row in status.split(";"):
-                        if "\n" in row:
+                        if "\n" in row or not row:
                             continue
                         matrix.append([int(i) for i in row.split(":")])
                     self.status_button_matrix(matrix)
