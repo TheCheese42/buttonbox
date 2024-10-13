@@ -55,12 +55,12 @@ class Connection:
         while True:
             if self.paused:
                 time.sleep(0.01)
-                return
+                continue
 
             if not self.ser or not self.connected:
                 if not self.reconnect():
                     time.sleep(0.01)
-                break
+                continue
             elif not self.handshaked:
                 self.ser.read_all()
                 self.ser.write(b"HANDSHAKE\n")
@@ -73,7 +73,7 @@ class Connection:
                             break
                 else:
                     time.sleep(0.01)
-                break
+                continue
 
             # We are connected and got a handshake
 
