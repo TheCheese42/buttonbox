@@ -95,7 +95,7 @@ class Connection:
         self.handshaked = False
 
     def process_task(self, line: str) -> None:
-        task = line.split(" ")
+        task = line.split()
         if task[0] == "EVENT":
             if task[1] == "ROTARYENCODER":
                 if task[2] == "CLOCKWISE":
@@ -108,6 +108,8 @@ class Connection:
                     status = task[3]
                     matrix = []
                     for row in status.split(";"):
+                        if "\n" in row:
+                            continue
                         matrix.append([int(i) for i in row.split(":")])
                     self.status_button_matrix(matrix)
                 elif task[2] == "SINGLE":
