@@ -1,6 +1,7 @@
 import json
+from pathlib import Path
 from subprocess import getoutput
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 try:
     from . import config
@@ -42,11 +43,9 @@ class Profile:
         self.data = data
 
     @classmethod
-    def from_json(cls, json_content: str) -> "Profile":
-        return cls(json.loads(json_content))
-
-    def to_json(self) -> str:
-        return json.dumps(self.data)
+    def empty(cls) -> "Profile":
+        with open(Path(__file__).parent / "empty_profile.json") as fp:
+            return cls(json.load(fp))
 
     @property
     def name(self) -> str:
@@ -125,12 +124,35 @@ GAME_LOOKUP = {
 }
 
 
-def load_profiles() -> list[Profile]:
+def load_profiles() -> dict[int, Profile]:
     with open(config.PROFILES_PATH, "r", encoding="utf-8") as fp:
         profiles: list[PROFILE] = json.load(fp)
-    return [Profile(profile) for profile in profiles]
+
+    profiles_dict = {}
+    for i, profile in enumerate(profiles):
+        profiles_dict[i] = Profile(profile)
+
+    return profiles_dict
 
 
-def save_profiles(profiles: list[Profile]) -> None:
+def save_profiles(profiles: dict[int, Profile]) -> None:
+    profiles_list = []
+    for profile in profiles.values():
+        profiles_list.append(profile.data)
+
     with open(config.PROFILES_PATH, "w", encoding="utf-8") as fp:
-        json.dump([profile.data for profile in profiles], fp)
+        json.dump(profiles_list, fp)
+
+
+def sort_dict(d: dict[Any, Any]) -> dict[Any, Any]:
+    new = {}
+    for i in sorted(d.keys()):
+        new[i] = d[i]
+    return new
+
+
+def rebuild_numbered_dict(d: dict[Any, Any]) -> dict[Any, Any]:
+    new = {}
+    for i, profile in enumerate(sort_dict(d).values()):
+        new[i] = profile
+    return new

@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QWidget
 from serial.tools.list_ports import comports
 
 try:
+    from . import model
     from .icons import resource as _  # noqa
     from .ui.about_ui import Ui_About
     from .ui.licenses_ui import Ui_Licenses
@@ -20,6 +21,7 @@ try:
     from .ui.settings_ui import Ui_Settings
     from .ui.window_ui import Ui_MainWindow
 except ImportError:
+    import model  # type: ignore[no-redef]
     from icons import resource as _  # noqa
     from ui.about_ui import Ui_About
     from ui.licenses_ui import Ui_Licenses
@@ -47,6 +49,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         super().__init__(None)
         self.conn = conn
         self.main_widget_detected = False
+        self.profiles = model.sort_dict(model.load_profiles())
         self.setupUi(self)
         self.select_default_port()
 
@@ -222,7 +225,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.actionRun_in_Background.triggered.connect(self.close)
         self.actionQuit.triggered.connect(self.full_quit)
         self.actionSettings.triggered.connect(self.settings)
-        self.actionProfiles.triggered.connect(self.profiles)
+        self.actionProfiles.triggered.connect(self.open_profiles)
         self.actionSerial_Monitor.triggered.connect(self.serial_monitor)
         self.actionLog.triggered.connect(self.open_log)
         self.actionMicrocontroller_Debug_Log.triggered.connect(
@@ -272,9 +275,11 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         dialog = LicensesDialog(self)
         dialog.exec()
 
-    def profiles(self) -> None:
-        dialog = ProfilesDialog(self)
-        dialog.exec()
+    def open_profiles(self) -> None:
+        dialog = ProfilesDialog(self, self.profiles.copy())
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.profiles = dialog.profiles
+            model.save_profiles(self.profiles)
 
     def serial_monitor(self) -> None:
         dialog = SerialMonitor(self, self.conn)
@@ -363,14 +368,52 @@ class AboutDialog(QDialog, Ui_About):  # type: ignore[misc]
 
 
 class ProfilesDialog(QDialog, Ui_Profiles):  # type: ignore[misc]
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(
+        self,
+        parent: QWidget,
+        profiles: dict[int, model.Profile],
+    ) -> None:
         super().__init__(parent)
+        self.profiles = profiles
         self.setupUi(self)
+        self.connectSignalsSlots()
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
+        self.updateUi()
+
+    def updateUi(self) -> None:
+        self.profiles = model.sort_dict(
+            self.profiles
+        )
+        self.profilesList.clear()
+        for profile in self.profiles.values():
+            self.profilesList.addItem(profile.name)
+
+    def connectSignalsSlots(self) -> None:
+        self.addProfile.clicked.connect(self.new_profile)
+        self.editProfile.clicked.connect(self.profile_editor)
+        self.deleteProfile.clicked.connect(self.delete_profile)
+
+    def new_profile(self) -> None:
+        self.profiles[len(self.profiles)] = model.Profile.empty()
+        self.updateUi()
+
+    def delete_profile(self) -> None:
+        try:
+            selected = self.profilesList.selectedIndexes()[0].row()
+        except IndexError:
+            return
+        self.profiles.pop(selected)
+        self.profiles = model.rebuild_numbered_dict(self.profiles)
+        self.updateUi()
 
     def profile_editor(self) -> None:
+        try:
+            selected = self.profilesList.selectedIndexes()[0].row()
+        except IndexError:
+            return
+        return  # TODO
         dialog = ProfileEditor(self)
         dialog.exec()
 

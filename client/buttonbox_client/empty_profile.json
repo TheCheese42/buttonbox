@@ -1,0 +1,95 @@
+{
+    "name": "New Profile",
+    "auto_activate": null,
+    "led_profile": null,
+    "button_single": {
+        "type": null,
+        "value": null
+    },
+    "button_matrix": [
+        [
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            }
+        ],
+        [
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            }
+        ],
+        [
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            }
+        ],
+        [
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            }
+        ],
+        [
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            }
+        ],
+        [
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            },
+            {
+                "type": null,
+                "value": null
+            }
+        ]
+    ]
+}

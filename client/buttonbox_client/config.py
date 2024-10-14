@@ -11,7 +11,7 @@ CONFIG_DIR = Path(
         QStandardPaths.StandardLocation.AppDataLocation
     )
 ) / "Buttonbox"
-CONFIG_PATH = CONFIG_DIR / ".config.json"
+CONFIG_PATH = CONFIG_DIR / "config.json"
 LOGGER_PATH = CONFIG_DIR / "latest.log"
 MC_DEBUG_LOG_PATH = CONFIG_DIR / "mcdebug.log"
 SER_HISTORY_PATH = CONFIG_DIR / "serial_history.log"
@@ -42,9 +42,16 @@ def trunc_log() -> None:
         fp.write("")
 
 
+def ensure_profiles_file() -> None:
+    if not PROFILES_PATH.exists():
+        with open(PROFILES_PATH, "w", encoding="utf-8") as fp:
+            fp.write("[]")
+
+
 def init_config() -> None:
     create_app_dir()
     trunc_log()
+    ensure_profiles_file()
 
     if not config_exists():
         with open(CONFIG_PATH, "w", encoding="utf-8") as fp:
