@@ -4,7 +4,7 @@ from subprocess import getoutput
 try:
     from . import config
 except ImportError:
-    import config
+    import config  # type: ignore[no-redef]
 
 
 GAME_ACTION_ENTRY = dict[str, str]
@@ -29,10 +29,10 @@ def exec_entry(entry: BUTTON_ENTRY) -> None:
     if entry["type"] is None:
         return
     elif entry["type"] == "command":
-        getoutput(entry["value"], encoding="utf-8")
+        getoutput(entry["value"], encoding="utf-8")  # type: ignore[arg-type]
     elif entry["type"] == "game_action":
-        game = entry["value"]["game"]
-        action = entry["value"]["action"]
+        game = entry["value"]["game"]  # type: ignore[index]
+        action = entry["value"]["action"]  # type: ignore[index]
         getattr(GAME_LOOKUP[game], action)()
 
 
@@ -42,7 +42,7 @@ class Profile:
 
     @property
     def name(self) -> str:
-        return self.data["name"]
+        return self.data["name"]  # type: ignore[return-value]
 
     @name.setter
     def name(self, val: str) -> None:
@@ -51,7 +51,7 @@ class Profile:
     @property
     def auto_activate(self) -> Optional[str]:
         """The callable used for autodetection"""
-        return self.data["auto_activate"]
+        return self.data["auto_activate"]  # type: ignore[return-value]
 
     @auto_activate.setter
     def auto_activate(self, val: Optional[str]) -> None:
@@ -60,7 +60,7 @@ class Profile:
     @property
     def led_profile(self) -> Optional[str]:
         """The callable managing the LEDs"""
-        return self.data["led_profile"]
+        return self.data["led_profile"]  # type: ignore[return-value]
 
     @led_profile.setter
     def led_profile(self, val: Optional[str]) -> None:
@@ -68,7 +68,7 @@ class Profile:
 
     @property
     def button_single(self) -> BUTTON_ENTRY:
-        return self.data["button_single"]
+        return self.data["button_single"]  # type: ignore[return-value]
 
     @button_single.setter
     def button_single(self, val: BUTTON_ENTRY) -> None:
@@ -76,7 +76,7 @@ class Profile:
 
     @property
     def button_matrix(self) -> list[list[BUTTON_ENTRY]]:
-        return self.data["button_matrix"]
+        return self.data["button_matrix"]  # type: ignore[return-value]
 
     @button_matrix.setter
     def button_matrix(self, val: list[list[BUTTON_ENTRY]]) -> None:

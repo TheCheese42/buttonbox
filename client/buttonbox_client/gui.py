@@ -206,7 +206,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.testModeFrame.setEnabled(True)
         else:
             self.conn.test_mode = False
-            if self.conn.connected:
+            if self.conn.connected and self.conn.ser:
                 self.conn.ser.read_all()
             self.conn.write_queue.clear()
             self.testModeFrame.setEnabled(False)
