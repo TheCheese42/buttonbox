@@ -1,0 +1,30 @@
+[
+    {
+        "name": "Some Car Game",
+        "auto_activate": "off", // Do not auto activate
+        "led_profile": "off", // Do not use LEDs
+        "button_single": {
+            "type": "command",
+            "value": "firefox" // Raw command
+        },
+        "button_matrix": [
+            [
+                {
+                    "type": "command",
+                    "value": "code"
+                },
+                {
+                    "type": "game_action",
+                    "value": {
+                        "game": "game_x",
+                        "action": "action_y"
+                    }
+                },
+                {
+                    "type": "off",
+                    "value": ""
+                }
+            ] // Repeat this array 6 times (one per row)
+        ]
+    }
+]
