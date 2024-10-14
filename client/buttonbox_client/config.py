@@ -15,7 +15,7 @@ CONFIG_PATH = CONFIG_DIR / ".config.json"
 LOGGER_PATH = CONFIG_DIR / "latest.log"
 MC_DEBUG_LOG_PATH = CONFIG_DIR / "mcdebug.log"
 SER_HISTORY_PATH = CONFIG_DIR / "serial_history.log"
-PROFILES_PATH = CONFIG_DIR / "profiles"
+PROFILES_PATH = CONFIG_DIR / "profiles.json"
 
 DEFAULT_CONFIG = {
     "dark": False,

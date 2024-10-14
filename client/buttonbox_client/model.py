@@ -123,3 +123,14 @@ class BeamNG(Game):
 GAME_LOOKUP = {
     "beamng": BeamNG,
 }
+
+
+def load_profiles() -> list[Profile]:
+    with open(config.PROFILES_PATH, "r", encoding="utf-8") as fp:
+        profiles: list[PROFILE] = json.load(fp)
+    return [Profile(profile) for profile in profiles]
+
+
+def save_profiles(profiles: list[Profile]) -> None:
+    with open(config.PROFILES_PATH, "w", encoding="utf-8") as fp:
+        json.dump([profile.data for profile in profiles], fp)
