@@ -1,5 +1,6 @@
-from typing import Callable, Optional, Union
+import json
 from subprocess import getoutput
+from typing import Optional, Union
 
 try:
     from . import config
@@ -39,6 +40,13 @@ def exec_entry(entry: BUTTON_ENTRY) -> None:
 class Profile:
     def __init__(self, data: PROFILE) -> None:
         self.data = data
+
+    @classmethod
+    def from_json(cls, json_content: str) -> "Profile":
+        return cls(json.loads(json_content))
+
+    def to_json(self) -> str:
+        return json.dumps(self.data)
 
     @property
     def name(self) -> str:
