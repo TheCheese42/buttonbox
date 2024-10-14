@@ -57,7 +57,7 @@ class Connection:
                 time.sleep(0.01)
                 continue
 
-            if not self.ser or not self.connected:
+            if not self.ser or not self.connected or not self.ser.is_open:
                 if not self.reconnect():
                     time.sleep(0.01)
                 continue

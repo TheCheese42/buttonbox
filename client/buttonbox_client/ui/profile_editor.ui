@@ -99,7 +99,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_2">
+        <widget class="QLineEdit" name="nameEdit">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -160,7 +160,7 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QTableWidget" name="tableWidget">
+        <widget class="QTableWidget" name="matrixTable">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -183,16 +183,19 @@
           <bool>false</bool>
          </property>
          <property name="selectionMode">
-          <enum>QAbstractItemView::NoSelection</enum>
+          <enum>QAbstractItemView::SingleSelection</enum>
+         </property>
+         <property name="showGrid">
+          <bool>true</bool>
          </property>
          <attribute name="horizontalHeaderCascadingSectionResizes">
           <bool>false</bool>
          </attribute>
          <attribute name="horizontalHeaderDefaultSectionSize">
-          <number>61</number>
+          <number>60</number>
          </attribute>
-         <attribute name="verticalHeaderCascadingSectionResizes">
-          <bool>false</bool>
+         <attribute name="verticalHeaderDefaultSectionSize">
+          <number>29</number>
          </attribute>
          <row>
           <property name="text">
@@ -226,6 +229,11 @@
          </row>
          <column>
           <property name="text">
+           <string>Col 0</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
            <string>Col 1</string>
           </property>
          </column>
@@ -234,99 +242,94 @@
            <string>Col 2</string>
           </property>
          </column>
-         <column>
-          <property name="text">
-           <string>Col 3</string>
-          </property>
-         </column>
          <item row="0" column="0">
           <property name="text">
-           <string>00</string>
+           <string>0 - 0</string>
           </property>
          </item>
          <item row="0" column="1">
           <property name="text">
-           <string>01</string>
+           <string>0 - 1</string>
           </property>
          </item>
          <item row="0" column="2">
           <property name="text">
-           <string>02</string>
+           <string>0 - 2</string>
           </property>
          </item>
          <item row="1" column="0">
           <property name="text">
-           <string>10</string>
+           <string>1 - 0</string>
           </property>
          </item>
          <item row="1" column="1">
           <property name="text">
-           <string>11</string>
+           <string>1 - 1</string>
           </property>
          </item>
          <item row="1" column="2">
           <property name="text">
-           <string>12</string>
+           <string>1 - 2</string>
           </property>
          </item>
          <item row="2" column="0">
           <property name="text">
-           <string>20</string>
+           <string>2 - 0</string>
           </property>
          </item>
          <item row="2" column="1">
           <property name="text">
-           <string>21</string>
+           <string>2 - 1</string>
           </property>
          </item>
          <item row="2" column="2">
           <property name="text">
-           <string>22</string>
+           <string>2 - 2</string>
           </property>
          </item>
          <item row="3" column="0">
           <property name="text">
-           <string>30</string>
+           <string>3 - 0</string>
           </property>
          </item>
          <item row="3" column="1">
           <property name="text">
-           <string>31</string>
+           <string>3 - 1</string>
           </property>
          </item>
          <item row="3" column="2">
           <property name="text">
-           <string>32</string>
+           <string>3 - 2</string>
           </property>
          </item>
          <item row="4" column="0">
           <property name="text">
-           <string>40</string>
+           <string>4 - 0</string>
           </property>
          </item>
          <item row="4" column="1">
           <property name="text">
-           <string>41</string>
+           <string>4 - 1</string>
           </property>
          </item>
          <item row="4" column="2">
           <property name="text">
-           <string>42</string>
+           <string>4 - 2</string>
           </property>
          </item>
          <item row="5" column="0">
           <property name="text">
-           <string>50</string>
+           <string>5 - 0</string>
           </property>
          </item>
          <item row="5" column="1">
           <property name="text">
-           <string>51</string>
+           <string>5 - 1</string>
           </property>
          </item>
          <item row="5" column="2">
           <property name="text">
-           <string>52</string>
+           <string>5 - 2</string>
           </property>
          </item>
         </widget>
@@ -691,12 +694,12 @@
            </property>
            <item>
             <property name="text">
-             <string>Game Action</string>
+             <string>Command</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Command</string>
+             <string>Game Action</string>
             </property>
            </item>
            <item>
@@ -726,7 +729,7 @@
            </property>
            <property name="maximumSize">
             <size>
-             <width>1000</width>
+             <width>0</width>
              <height>16777215</height>
             </size>
            </property>
@@ -737,9 +740,12 @@
          </item>
          <item>
           <widget class="QLineEdit" name="matrixEdit">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="maximumSize">
             <size>
-             <width>0</width>
+             <width>1000</width>
              <height>16777215</height>
             </size>
            </property>

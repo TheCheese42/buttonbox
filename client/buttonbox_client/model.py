@@ -1,7 +1,9 @@
 import json
+import sys
+from itertools import chain
 from pathlib import Path
 from subprocess import getoutput
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 try:
     from . import config
@@ -90,7 +92,7 @@ class Profile:
         self.data["button_matrix"] = val
 
     def get_button_matrix_entry_for(self, row: int, col: int) -> BUTTON_ENTRY:
-        return self.button_matrix[row][col]
+        return self.button_matrix[col][row]
 
     def set_button_matrix_entry_for(
         self,
@@ -98,10 +100,21 @@ class Profile:
         col: int,
         entry: BUTTON_ENTRY,
     ) -> None:
-        self.button_matrix[row][col] = entry
+        self.button_matrix[col][row] = entry
 
 
 class Game:
+    game_name = "Game"
+
+    @staticmethod
+    def actions() -> list[Callable[[Any], None]]:
+        return []
+
+    @staticmethod
+    def name_for_action(action: Callable[[Any], None]) -> Optional[str]:
+        lookup: dict[Callable[[Any], None], str] = {}
+        return lookup.get(action)
+
     def detect(self) -> bool:
         """
         Detect wether the game is currently running.
@@ -116,12 +129,33 @@ class Game:
 
 
 class BeamNG(Game):
-    pass
+    game_name = "BeamNG"
+
+    @staticmethod
+    def actions() -> list[Callable[[Any], None]]:
+        return [
+            BeamNG.test,
+        ]
+
+    @staticmethod
+    def name_for_action(action: Callable[[Any], None]) -> Optional[str]:
+        lookup: dict[Callable[[Any], None], str] = {
+            BeamNG.test: "Test",
+        }
+        return lookup.get(action)
+
+    def test(self) -> None:
+        """Just testing."""
 
 
 GAME_LOOKUP = {
     "beamng": BeamNG,
 }
+
+
+GAME_ACTIONS: list[Callable[[Any], None]] = list(
+    chain(*[game.actions() for game in GAME_LOOKUP.values()])
+)
 
 
 def load_profiles() -> dict[int, Profile]:
@@ -156,3 +190,18 @@ def rebuild_numbered_dict(d: dict[Any, Any]) -> dict[Any, Any]:
     for i, profile in enumerate(sort_dict(d).values()):
         new[i] = profile
     return new
+
+
+def reverse_lookup(d: dict[Any, Any], value: Any) -> Any:
+    for key, val in d.items():
+        if val == value:
+            return key
+    raise KeyError("Key for value " + str(value) + " not found")
+
+
+def find_class(method: Callable[..., Any]) -> Optional[type]:
+    module = sys.modules.get(method.__module__)
+    if module is None:
+        return None
+    cls: type = getattr(module, method.__qualname__.split('.')[0])
+    return cls

@@ -1,13 +1,15 @@
 import platform
 import sys
 import webbrowser
+from copy import deepcopy
 from functools import partial
 from subprocess import getoutput
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QAction, QCloseEvent, QColor
-from PyQt6.QtWidgets import QApplication, QDialog, QMainWindow, QWidget
+from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QLineEdit,
+                             QMainWindow, QWidget)
 from serial.tools.list_ports import comports
 
 try:
@@ -89,7 +91,6 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 background-color: rgb(40, 40, 40);
             }
         """
-        print(self.styleSheet())
         self.apply_dark()
 
         self.updateMainWidgetTimer = QTimer(self)
@@ -413,18 +414,228 @@ class ProfilesDialog(QDialog, Ui_Profiles):  # type: ignore[misc]
             selected = self.profilesList.selectedIndexes()[0].row()
         except IndexError:
             return
-        return  # TODO
-        dialog = ProfileEditor(self)
-        dialog.exec()
+        dialog = ProfileEditor(self, deepcopy(self.profiles[selected]))
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            edited_profile = dialog.profile
+            self.profiles[selected] = edited_profile
+            self.updateUi()
 
 
 class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, parent: QWidget, profile: model.Profile) -> None:
         super().__init__(parent)
+        self.profile = profile
+        self.selected_matrix_point = (0, 0)
         self.setupUi(self)
+        self.connectSignalsSlots()
+
+    def _set_type_input_pair(
+        self,
+        type_combo: QComboBox,
+        input_line: QLineEdit,
+        input_combo: QComboBox,
+    ) -> None:
+        input_line.setEnabled(True)
+        input_combo.setEnabled(True)
+        if type_combo.currentText() == "Off":
+            input_line.setEnabled(False)
+            input_line.setText("")
+            input_combo.setEnabled(False)
+            input_combo.clear()
+        elif type_combo.currentText() == "Command":
+            input_line.setMaximumWidth(1000)
+            input_combo.setMaximumWidth(0)
+            input_combo.clear()
+        elif type_combo.currentText() == "Game Action":
+            input_line.setMaximumWidth(0)
+            input_line.setText("")
+            input_combo.setMaximumWidth(1000)
+            if input_combo.count() < 1:
+                self._populate_combo(input_combo)
+
+    def _populate_combo(
+        self,
+        combo: QComboBox,
+        selected: Optional[model.GAME_ACTION_ENTRY] = None,
+    ) -> None:
+        combo.clear()
+        for i, action in enumerate(model.GAME_ACTIONS):
+            action_class = model.find_class(action)
+            combo.addItem(
+                f"{action_class.game_name}: "  # type: ignore[union-attr]
+                f"{action_class.name_for_action(action)}"  # type: ignore[union-attr]  # noqa
+            )
+            if (
+                (
+                    selected and
+                    model.reverse_lookup(
+                        model.GAME_LOOKUP, model.find_class(action)
+                    ) == selected["game"]
+                    and action.__name__ == selected["action"]
+                )
+                or i == 0
+            ):
+                combo.setCurrentIndex(i)
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
+
+        # Name
+        self.nameEdit.setText(self.profile.name)
+
+        # Auto activate
+        self.autoActivateCombo.clear()
+        for i, item in enumerate(["Off"] + list(model.GAME_LOOKUP.keys())):
+            self.autoActivateCombo.addItem(item)
+            if self.profile.auto_activate == item:
+                self.autoActivateCombo.setCurrentIndex(i)
+
+        # LED profile
+        self.ledCombo.clear()
+        for i, item in enumerate(["Off"] + list(model.GAME_LOOKUP.keys())):
+            self.ledCombo.addItem(item)
+            if self.profile.led_profile == item:
+                self.ledCombo.setCurrentIndex(i)
+
+        # Single button
+        if (type := self.profile.button_single["type"]) is None:
+            self.singleTypeCombo.setCurrentText("Off")
+        elif type == "command":
+            self.singleTypeCombo.setCurrentText("Command")
+            self.singleEdit.setText(self.profile.button_single["value"])
+        else:
+            self.singleTypeCombo.setCurrentText("Game Action")
+            self._populate_combo(
+                self.singleCombo,
+                self.profile.button_single["value"],  # type: ignore[arg-type]
+            )
+        self._set_type_input_pair(
+            self.singleTypeCombo, self.singleEdit, self.singleCombo
+        )
+
+    def connectSignalsSlots(self) -> None:
+        self.nameEdit.textChanged.connect(self.name_changed)
+        self.autoActivateCombo.currentTextChanged.connect(
+            self.auto_activate_changed
+        )
+        self.ledCombo.currentTextChanged.connect(self.led_changed)
+        self.singleTypeCombo.currentTextChanged.connect(self.single_changed)
+        self.singleCombo.currentIndexChanged.connect(self.single_changed)
+        self.singleEdit.textChanged.connect(self.single_changed)
+        self.matrixTable.itemSelectionChanged.connect(self.matrix_selection)
+        self.matrixTypeCombo.currentTextChanged.connect(self.matrix_changed)
+        self.matrixCombo.currentIndexChanged.connect(self.matrix_changed)
+        self.matrixEdit.textChanged.connect(self.matrix_changed)
+
+    def name_changed(self) -> None:
+        self.profile.name = self.nameEdit.text()
+
+    def auto_activate_changed(self) -> None:
+        new: Optional[str] = self.autoActivateCombo.currentText()
+        if new == "Off":
+            new = None
+        self.profile.auto_activate = new
+
+    def led_changed(self) -> None:
+        new: Optional[str] = self.ledCombo.currentText()
+        if new == "Off":
+            new = None
+        self.profile.led_profile = new
+
+    def single_changed(self) -> None:
+        if self.singleTypeCombo.currentText() == "Off":
+            self.profile.button_single["type"] = None
+            self.profile.button_single["value"] = None
+        elif self.singleTypeCombo.currentText() == "Command":
+            command = self.singleEdit.text()
+            self.profile.button_single["type"] = "command"
+            self.profile.button_single["value"] = command
+        else:
+            action_index = self.singleCombo.currentIndex()
+            action = model.GAME_ACTIONS[action_index]
+            game_class = model.find_class(action)
+            self.profile.button_single["type"] = "game_action"
+            self.profile.button_single["value"] = {
+                "game": model.reverse_lookup(model.GAME_LOOKUP, game_class),
+                "action": action.__name__,
+            }
+        self._set_type_input_pair(
+            self.singleTypeCombo, self.singleEdit, self.singleCombo
+        )
+
+    def matrix_selection(self) -> None:
+        try:
+            index = self.matrixTable.selectedIndexes()[0]
+        except KeyError:
+            return
+        self.selected_matrix_point = (index.column(), index.row())
+        self.matrixTypeCombo.setEnabled(True)
+        if (
+            type := self.profile.get_button_matrix_entry_for(
+                *self.selected_matrix_point
+            )["type"]
+        ) is None:
+            self.matrixTypeCombo.setCurrentText("Off")
+        elif type == "command":
+            self.matrixTypeCombo.setCurrentText("Command")
+            self.matrixEdit.setText(
+                self.profile.get_button_matrix_entry_for(
+                    *self.selected_matrix_point
+                )["value"]
+            )
+        else:
+            self.matrixTypeCombo.setCurrentText("Game Action")
+            self._populate_combo(
+                self.matrixCombo,
+                self.profile.get_button_matrix_entry_for(  # type: ignore[arg-type]  # noqa
+                    *self.selected_matrix_point
+                )["value"],
+            )
+        self._set_type_input_pair(
+            self.matrixTypeCombo,
+            self.matrixEdit,
+            self.matrixCombo,
+        )
+
+    def matrix_changed(self) -> None:
+        if self.matrixTypeCombo.currentText() == "Off":
+            self.profile.set_button_matrix_entry_for(
+                *self.selected_matrix_point,
+                {
+                    "type": None,
+                    "value": None,
+                }
+            )
+        elif self.matrixTypeCombo.currentText() == "Command":
+            command = self.matrixEdit.text()
+            if command:
+                self.profile.set_button_matrix_entry_for(
+                    *self.selected_matrix_point,
+                    {
+                        "type": "command",
+                        "value": command,
+                    }
+                )
+        else:
+            action_index = self.matrixCombo.currentIndex()
+            action = model.GAME_ACTIONS[action_index]
+            game_class = model.find_class(action)
+            game_name = model.reverse_lookup(model.GAME_LOOKUP, game_class)
+            self.profile.set_button_matrix_entry_for(
+                *self.selected_matrix_point,
+                {
+                    "type": "game_action",
+                    "value": {
+                        "game": game_name,
+                        "action": action.__name__,
+                    },
+                }
+            )
+        self._set_type_input_pair(
+            self.matrixTypeCombo,
+            self.matrixEdit,
+            self.matrixCombo,
+        )
 
 
 class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
