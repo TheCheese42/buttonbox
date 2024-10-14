@@ -1,8 +1,8 @@
 [
     {
         "name": "Some Car Game",
-        "auto_activate": "off", // Do not auto activate
-        "led_profile": "off", // Do not use LEDs
+        "auto_activate": null, // Do not auto activate
+        "led_profile": null, // Do not use LEDs
         "button_single": {
             "type": "command",
             "value": "firefox" // Raw command
@@ -21,10 +21,17 @@
                     }
                 },
                 {
-                    "type": "off",
-                    "value": ""
+                    "type": null,
+                    "value": null
                 }
             ] // Repeat this array 6 times (one per row)
         ]
+    },
+    {
+        "name": "BeamNG",
+        "auto_activate": "beamng",
+        "led_profile": "beamng",
+        "button_single": {}, // ...
+        "button_matrix": [] // ...
     }
 ]
