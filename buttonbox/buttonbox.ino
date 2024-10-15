@@ -16,13 +16,18 @@ const int BUTTON_MATRIX_VOLTAGES[] = {4095, 2000, 1000};  // ADAPT
 // ± Range of voltages
 const int BUTTON_VOLTAGE_RANGE = 50;
 
-// From top to bottom as the buttons are placed, NOT as the pins are placed
-const int BUTTON_MATRIX_PINS[] = {26, 25, 33, 32, 35, 34};  // Eventually ADAPT
+// From top to bottom as the buttons are placed, *not* as the pins are placed
+const int BUTTON_MATRIX_PINS[] = {26, 25, 33, 32, 35, 34};  // ADAPT
 
-const int BUTTON_SINGLE_PIN = 17;  // Eventually ADAPT
+const int BUTTON_SINGLE_PIN = 17;  // ADAPT
 
-const int ROTARY_ENCODER_CLK = 14;  // Eventually ADAPT
-const int ROTARY_ENCODER_DT = 27;  // Eventually ADAPT
+const int ROTARY_ENCODER_CLK = 14;  // ADAPT
+const int ROTARY_ENCODER_DT = 27;  // ADAPT
+
+const int LED_LEFT_PIN = 4;  // ADAPT
+const int LED_MIDDLE_PIN = 0;  // ADAPT
+const int LED_RIGHT_PIN = 2;  // ADAPT
+const int LED_EXTRA_PIN = 16;  // ADAPT
 
 int ROTARY_ENCODER_STATE = HIGH;
 
@@ -158,18 +163,36 @@ void pollButtonSingle() {
 }
 
 
+int parseLedPin(String str) {
+  int pin;
+  if (str.startsWith("LEFT")) {
+    pin = LED_LEFT_PIN;
+  } else if (str.startsWith("MIDDLE")) {
+    pin = LED_MIDDLE_PIN;
+  } else if (str.startsWith("RIGHT")) {
+    pin = LED_RIGHT_PIN;
+  } else if (str.startsWith("EXTRA")) {
+    pin = LED_EXTRA_PIN;
+  } else {
+    pin = LED_EXTRA_PIN;
+    Serial.println("ERROR Invalid LED specifier '" + str + "' (fallback to EXTRA)");
+  }
+  return pin;
+}
+
+
 void execDisplayTask(String task) {
-  if (task.startsWith("display reset")) {
+  if (task.startsWith("DISPLAY RESET")) {
     resetDisplay();
-  } else if (task.startsWith("display display")) {
+  } else if (task.startsWith("DISPLAY DISPLAY")) {
     display.display();
-  } else if (task.startsWith("display print")) {
+  } else if (task.startsWith("DISPLAY PRINT")) {
     String text = task.substring(14);
     display.print(text);
-  } else if (task.startsWith("display println")) {
+  } else if (task.startsWith("DISPLAY PRINTLN")) {
     String text = task.substring(16);
     display.println(text);
-  } else if (task.startsWith("display profile")) {
+  } else if (task.startsWith("DISPLAY PROFILE")) {
     String num = task.substring(16, 18);
     String profile = task.substring(19);
     resetDisplay();
@@ -179,7 +202,20 @@ void execDisplayTask(String task) {
     display.setTextSize(2);
     display.println(profile);
   } else {
-    Serial.println("ERROR Invalid display task '" + task + "'");
+    Serial.println("ERROR Invalid DISPLAY task '" + task + "'");
+  }
+}
+
+
+void execLedTask(String task) {
+  if (task.startsWith("LED HIGH")) {
+    int pin = parseLedPin(task.substring(9, 15));
+    digitalWrite(pin, HIGH);
+  } else if (task.startsWith("LED LOW")) {
+    int pin = parseLedPin(task.substring(8, 14));
+    digitalWrite(pin, LOW);
+  } else {
+    Serial.println("ERROR Invalid LED task '" + task + "'");
   }
 }
 
@@ -187,14 +223,16 @@ void execDisplayTask(String task) {
 void execTask(String task) {
   if (task.startsWith("HANDSHAKE")) {
     Serial.println("HANDSHAKE");
-  } else if (task.startsWith("digital HIGH")) {
+  } else if (task.startsWith("DIGITAL HIGH")) {
     int num = task.substring(13).toInt();
     digitalWrite(num, HIGH);
-  } else if (task.startsWith("digital LOW")) {
+  } else if (task.startsWith("DIGITAL LOW")) {
     int num = task.substring(12).toInt();
     digitalWrite(num, LOW);
-  } else if (task.startsWith("display")) {
+  } else if (task.startsWith("DISPLAY")) {
     execDisplayTask(task);
+  } else if (task.startsWith("LED")) {
+    execLedTask(task);
   } else {
     Serial.println("ERROR Invalid task '" + task + "'");
   }
