@@ -51,15 +51,18 @@ class Connection:
         self.mc_error: Callable[[str], None] = lambda _: None
         self.mc_critical: Callable[[str], None] = lambda _: None
 
+    def write(self, cmd: str) -> None:
+        self.write_queue.append(cmd)
+
     def run(self) -> None:
         while True:
             if self.paused:
-                time.sleep(0.01)
+                time.sleep(0.05)
                 continue
 
             if not self.ser or not self.connected or not self.ser.is_open:
                 if not self.reconnect():
-                    time.sleep(0.01)
+                    time.sleep(0.05)
                 continue
             elif not self.handshaked:
                 self.ser.read_all()
@@ -69,10 +72,14 @@ class Connection:
                         if self.ser.read_until().decode("utf-8").startswith(
                             "HANDSHAKE"
                         ):
+                            self.log(
+                                f"Received HANDSHAKE on port {self.ser.name}",
+                                "DEBUG"
+                            )
                             self.handshaked = True
                             break
                 else:
-                    time.sleep(0.01)
+                    time.sleep(0.05)
                 continue
 
             # We are connected and got a handshake
@@ -81,12 +88,15 @@ class Connection:
                 cmd = self.write_queue.popleft()
                 self.ser.write(cmd.encode(
                     "utf-8") + b"\n")
+                self.log(f"Wrote {cmd} to port {self.ser.name}", "DEBUG")
                 self.out_history.append(cmd)
                 self.full_history.append(f"[OUT] {cmd}")
 
             if self.ser.in_waiting > 0 and not self.test_mode:
                 line = self.ser.read_until().decode("utf-8")
+                self.log(f"Received {line} from port {self.ser.name}", "DEBUG")
                 self.in_history.append(line)
+                # Double space for alignment with [OUT]
                 self.full_history.append(f"[IN]  {line}")
                 self.process_task(line)
 
@@ -149,9 +159,13 @@ class Connection:
 
 
 def main() -> None:
+    config.log("BUTTONBOX - Client", "INFO")
     port = config.get_config_value("default_port")
+    config.log(f"Default port: {port}", "INFO")
     baudrate = config.get_config_value("baudrate")
+    config.log(f"Using baudrate {baudrate}", "INFO")
     conn = Connection(port, baudrate, config.log, config.log_mc)
+    config.log("Launching GUI...", "INFO")
     app, win = launch_gui(conn)
     tray_icon = Image.open(Path(__file__).parent / "icons" / "cube-icon.png")
 
@@ -177,17 +191,24 @@ def main() -> None:
     )
 
     icon.run_detached()
+    config.log("Started system tray icon", "INFO")
     win.hide()
     conn_thread = Thread(target=conn.run, name="buttonbox_serial", daemon=True)
+    config.log("Starting serial connection event loop...", "INFO")
     conn_thread.start()
 
     try:
         code = app.exec()
+    except (KeyboardInterrupt, EOFError) as e:
+        config.log(f"Received {e.__class__.__name__}, exiting cleanly", "INFO")
     except Exception as e:
         config.log(str(e), "CRITICAL")
         traceback.print_exc(file=config.LogStream("TRACE"))
 
     icon.stop()
+    conn.close()
+    win.close()
+    app.quit()
     sys.exit(code)
 
 

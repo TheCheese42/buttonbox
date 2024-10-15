@@ -1,15 +1,22 @@
 import json
 import sys
+import time
 from itertools import chain
 from pathlib import Path
 from subprocess import getoutput
-from typing import Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+
+from client.buttonbox_client.__main__ import Connection
 
 try:
     from . import config
 except ImportError:
     import config  # type: ignore[no-redef]
 
+if TYPE_CHECKING:
+    from .__main__ import Connection
+
+STATE = {True: "HIGH", False: "LOW"}
 
 GAME_ACTION_ENTRY = dict[str, str]
 BUTTON_ENTRY = dict[
@@ -105,6 +112,10 @@ class Profile:
 
 class Game:
     game_name = "Game"
+    priority = 1
+
+    def __init__(self, conn: "Connection") -> None:
+        self.conn = conn
 
     @staticmethod
     def actions() -> list[Callable[[Any], None]]:
@@ -126,6 +137,39 @@ class Game:
         Manage the LEDs depending on gameplay.
         """
         return None
+
+    def _led_left(self, state: bool) -> None:
+        self.conn.write(f"LED {STATE[state]} LEFT")
+
+    def _led_middle(self, state: bool) -> None:
+        self.conn.write(f"LED {STATE[state]} MIDDLE")
+
+    def _led_right(self, state: bool) -> None:
+        self.conn.write(f"LED {STATE[state]} RIGHT")
+
+    def _led_extra(self, state: bool) -> None:
+        self.conn.write(f"LED {STATE[state]} EXTRA")
+
+
+class Default(Game):
+    game_name = "Default"
+    priority = 0
+
+    def __init__(self, conn: Connection) -> None:
+        super().__init__(conn)
+        self.led_man_cooldown = 1
+        self.led_man_last = 0
+
+    def detect(self) -> bool:
+        return True
+
+    def led_manager(self) -> None:
+        if time.time() - self.led_man_cooldown >= self.led_man_last:
+            self._led_left(True)
+            self._led_middle(True)
+            self._led_right(True)
+            self._led_extra(True)
+        self.led_man_last = time.time()
 
 
 class BeamNG(Game):
@@ -149,6 +193,7 @@ class BeamNG(Game):
 
 
 GAME_LOOKUP = {
+    "default": Default,
     "beamng": BeamNG,
 }
 

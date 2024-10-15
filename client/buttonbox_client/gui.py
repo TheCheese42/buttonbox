@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QAction, QCloseEvent, QColor
 from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QLineEdit,
-                             QMainWindow, QWidget)
+                             QMainWindow, QMessageBox, QWidget)
 from serial.tools.list_ports import comports
 
 try:
@@ -34,16 +34,25 @@ except ImportError:
     from ui.window_ui import Ui_MainWindow
 
 try:
-    if TYPE_CHECKING:
-        from .__main__ import Connection
     from . import config, version
     config.init_config()
 except ImportError:
-    if TYPE_CHECKING:
-        from __main__ import Connection  # type: ignore[no-redef]
     import config  # type: ignore[no-redef]
     import version  # type: ignore[no-redef]
     config.init_config()
+
+if TYPE_CHECKING:
+    from .__main__ import Connection
+
+
+def show_error(parent, title: str, desc: str) -> int:
+    messagebox = QMessageBox(parent)
+    messagebox.setIcon(QMessageBox.Icon.Critical)
+    messagebox.setWindowTitle(title)
+    messagebox.setText(desc)
+    messagebox.setStandardButtons(QMessageBox.StandardButton.Ok)
+    messagebox.setDefaultButton(QMessageBox.StandardButton.Ok)
+    return messagebox.exec()
 
 
 class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
@@ -52,6 +61,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.conn = conn
         self.main_widget_detected = False
         self.profiles = model.sort_dict(model.load_profiles())
+        self.current_profile: Optional[model.Profile] = None
         self.setupUi(self)
         self.select_default_port()
 
@@ -129,7 +139,22 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.test_check_box_changed()
 
     def populate_profile_combo(self) -> None:
-        self.profileCombo.clear()  # TODO
+        prev_items = [
+            self.profileCombo.itemText(i) for i in range(
+                self.profileCombo.count()
+            )
+        ]
+        new_items = ["None"] + [
+            profile.name for profile in self.profiles.values()
+        ]
+        if prev_items == new_items:
+            return  # Nothing changed
+        prev_text = self.profileCombo.currentText()
+        self.profileCombo.clear()
+        for i, profile in enumerate(new_items):
+            self.profileCombo.addItem(profile)
+            if profile == prev_text or i == 0:
+                self.profileCombo.setCurrentIndex(i)
 
     def populate_port_combo(self, select_default: bool = False) -> None:
         prev_items = [
@@ -195,11 +220,31 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                     self.profileCombo.setCurrentIndex(i)
 
     def profile_port_box_changed(self) -> None:
+        if self.profileCombo.count() < 1:
+            return
         text = self.profileCombo.currentText()
         if self.main_widget_detected:
-            self.set_profile(text)  # TODO
+            self.set_profile(text)
         else:
             self.set_port(text)
+
+    def set_profile(self, text: str) -> None:
+        profile = None
+        for prof in self.profiles.values():
+            if prof.name == text:
+                profile = prof
+        if not profile:
+            config.log(
+                f"set_profile() called with nonexistent profile {text}",
+                "ERROR",
+            )
+            show_error(
+                self,
+                "Invalid Profile",
+                f"The Profile {text} doesn't exist.",
+            )
+            return
+        self.current_profile = profile
 
     def test_check_box_changed(self) -> None:
         value = self.testCheckBox.isChecked()
