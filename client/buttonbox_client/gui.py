@@ -2,12 +2,12 @@ import platform
 import sys
 import webbrowser
 from copy import deepcopy
-from functools import partial
 from subprocess import getoutput
 from typing import TYPE_CHECKING, Any, Optional
 
+from pynput.keyboard import Controller, Key
 from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QAction, QCloseEvent, QColor
+from PyQt6.QtGui import QCloseEvent, QColor
 from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QLineEdit,
                              QMainWindow, QMessageBox, QWidget)
 from serial.tools.list_ports import comports
@@ -44,8 +44,20 @@ except ImportError:
 if TYPE_CHECKING:
     from .__main__ import Connection
 
+KEYBOARD = Controller()
 
-def show_error(parent, title: str, desc: str) -> int:
+
+def volume_up() -> None:
+    KEYBOARD.press(Key.media_volume_up)
+    KEYBOARD.release(Key.media_volume_up)
+
+
+def volume_down() -> None:
+    KEYBOARD.press(Key.media_volume_down)
+    KEYBOARD.release(Key.media_volume_down)
+
+
+def show_error(parent: QWidget, title: str, desc: str) -> int:
     messagebox = QMessageBox(parent)
     messagebox.setIcon(QMessageBox.Icon.Critical)
     messagebox.setWindowTitle(title)
@@ -62,8 +74,22 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.main_widget_detected = False
         self.profiles = model.sort_dict(model.load_profiles())
         self.current_profile: Optional[model.Profile] = None
+        self.test_mode = False
+        self.test_profile = model.TestProfile()
+        self.games_instances = {}
+        for game in model.GAME_LOOKUP.values():
+            if not game.hidden:
+                self.games_instances[game] = game(self.conn)
+        self.conn.rotary_encoder_clockwise = self._rot_clockwise
+        self.conn.rotary_encoder_counterclockwise = self._rot_counterclockwise
+        self.conn.status_button_matrix = self._button_matrix
+        self.conn.status_button_single = self._button_single
+        self.conn.mc_debug = self._mc_debug
+        self.conn.mc_warning = self._mc_warning
+        self.conn.mc_error = self._mc_error
+        self.conn.mc_critical = self._mc_critical
+        self.set_profile("test")
         self.setupUi(self)
-        self.select_default_port()
 
         self.connectSignalsSlots()
         self.light_stylesheet = self.styleSheet()
@@ -106,6 +132,110 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.updateMainWidgetTimer = QTimer(self)
         self.updateMainWidgetTimer.timeout.connect(self.updateMainWidget)
         self.updateMainWidgetTimer.start(1000)
+
+        self.detectProfileTimer = QTimer(self)
+        self.detectProfileTimer.timeout.connect(self.detect_profiles)
+        self.detectProfileTimer.start(1000)
+
+        self.ledManagerTimer = QTimer(self)
+        self.ledManagerTimer.timeout.connect(self.call_led_manager)
+        self.ledManagerTimer.start(50)
+
+    def detect_profiles(self) -> None:
+        if not config.get_config_value("auto_detect_profiles"):
+            return
+        for profile in self.profiles.values():
+            detect_method = profile.auto_activate_method()
+            if not detect_method:
+                continue
+            game: Optional[type[model.Game]] = model.find_class(detect_method)
+            if game is None:
+                config.log(
+                    "Can't find class of detection method "
+                    f"{detect_method.__name__}", "ERROR",
+                )
+                continue
+            if self.current_profile is None:
+                if detect_method(game):
+                    self.set_profile(profile.name)
+                continue
+            cur_detect_method = self.current_profile.auto_activate_method()
+            if not cur_detect_method:
+                cur_priority = 1
+            else:
+                cur_game: Optional[type[model.Game]] = model.find_class(
+                    cur_detect_method
+                )
+                if cur_game is None:
+                    config.log(
+                        "Can't find class of detection method "
+                        f"{cur_detect_method.__name__}", "ERROR",
+                    )
+                    return
+                cur_priority = cur_game.priority
+            if game.priority > cur_priority:
+                if detect_method(self.games_instances[game]):
+                    self.set_profile(profile.name)
+
+    def call_led_manager(self) -> None:
+        if not self.current_profile:
+            return
+        led_manager = self.current_profile.led_manager_method()
+        if not led_manager:
+            return
+        game: Optional[type[model.Game]] = model.find_class(led_manager)
+        if game is None:
+            config.log(
+                "Can't find class of detection method "
+                f"{led_manager.__name__}", "ERROR",
+            )
+            return
+        led_manager(self.games_instances[game])
+
+    def _rot_clockwise(self) -> None:
+        volume_up()
+        if self.test_mode:
+            if self.dial.value() >= self.dial.maximum():
+                self.dial.setValue(self.dial.minimum())
+            else:
+                self.dial.setValue(self.dial.value() + 1)
+
+    def _rot_counterclockwise(self) -> None:
+        volume_down()
+        if self.test_mode:
+            if self.dial.value() <= self.dial.minimum():
+                self.dial.setValue(self.dial.maximum())
+            else:
+                self.dial.setValue(self.dial.value() - 1)
+
+    def _button_single(self, state: int) -> None:
+        if not self.current_profile:
+            return
+        model.exec_entry(
+            self.current_profile.button_single,
+            bool(state),
+            self.games_instances,
+        )
+
+    def _button_matrix(self, matrix: list[list[int]]) -> None:
+        if not self.current_profile:
+            return
+        for i, row in enumerate(matrix):
+            for j, state in enumerate(row):
+                entry = self.current_profile.get_button_matrix_entry_for(i, j)
+                model.exec_entry(entry, bool(state), self.games_instances)
+
+    def _mc_debug(self, msg: str) -> None:
+        config.log_mc(f"[DEBUG] {msg}")
+
+    def _mc_warning(self, msg: str) -> None:
+        config.log_mc(f"[WARNING] {msg}")
+
+    def _mc_error(self, msg: str) -> None:
+        config.log_mc(f"[ERROR] {msg}")
+
+    def _mc_critical(self, msg: str) -> None:
+        config.log_mc(f"[CRITICAL] {msg}")
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
@@ -176,39 +306,8 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 self.profileCombo.setCurrentIndex(i)
 
     def refreshPorts(self) -> None:
-        prev_selected = self.menuPort.activeAction()
-        self.menuPort.clear()
         if not self.main_widget_detected:
             self.populate_port_combo()
-        for port in sorted(comports()):
-            action = QAction(port[0])
-            self.menuPort.addAction(action)
-            action.setCheckable(True)
-            if prev_selected and prev_selected.text() == port[0]:
-                action.activate(QAction.ActionEvent.Trigger)
-            action.changed.connect(partial(self.port_selected, action))
-
-    def select_default_port(self) -> None:
-        if port := config.get_config_value("default_port"):
-            for action in self.menuPort.actions():
-                if action.text() == port:
-                    action.activate(QAction.ActionEvent.Trigger)
-                    break
-
-    def port_selected(self, selected_action: QAction) -> None:
-        # selected_action is provided by partial
-        self.set_port(selected_action.text())
-        checked = False
-        for action in self.menuPort.actions():
-            if action == selected_action:
-                if action.isChecked():
-                    checked = True
-                else:
-                    checked = False
-        if checked:
-            for action in self.menuPort.actions():
-                if action != selected_action:
-                    action.setChecked(False)
 
     def set_port(self, port: str) -> None:
         self.conn.port = port
@@ -229,6 +328,9 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.set_port(text)
 
     def set_profile(self, text: str) -> None:
+        if text == "test":
+            self.current_profile = self.test_profile
+            return
         profile = None
         for prof in self.profiles.values():
             if prof.name == text:
@@ -248,13 +350,13 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
     def test_check_box_changed(self) -> None:
         value = self.testCheckBox.isChecked()
-        if value == self.conn.test_mode:
+        if value == self.test_mode:
             return
         if value:
-            self.conn.test_mode = True
+            self.test_mode = True
             self.testModeFrame.setEnabled(True)
         else:
-            self.conn.test_mode = False
+            self.test_mode = False
             if self.conn.connected and self.conn.ser:
                 self.conn.ser.read_all()
             self.conn.write_queue.clear()
@@ -341,6 +443,10 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             config.set_config_value("baudrate", selected_baudrate)
             self.conn.port = selected_port
             self.conn.baudrate = selected_baudrate
+            auto_detect_profiles = dialog.autoDetectCheck.isChecked()
+            config.set_config_value(
+                "auto_detect_profiles", auto_detect_profiles
+            )
             self.conn.reconnect()
 
     def open_github(self) -> None:
@@ -531,6 +637,10 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
         # Auto activate
         self.autoActivateCombo.clear()
         for i, item in enumerate(["Off"] + list(model.GAME_LOOKUP.keys())):
+            if (g := model.GAME_LOOKUP.get(item)) and g.hidden:
+                # Filter hidden
+                continue
+
             self.autoActivateCombo.addItem(item)
             if self.profile.auto_activate == item:
                 self.autoActivateCombo.setCurrentIndex(i)
@@ -538,6 +648,10 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
         # LED profile
         self.ledCombo.clear()
         for i, item in enumerate(["Off"] + list(model.GAME_LOOKUP.keys())):
+            if (g := model.GAME_LOOKUP.get(item)) and g.hidden:
+                # Filter hidden
+                continue
+
             self.ledCombo.addItem(item)
             if self.profile.led_profile == item:
                 self.ledCombo.setCurrentIndex(i)
@@ -735,6 +849,10 @@ class Settings(QDialog, Ui_Settings):  # type: ignore[misc]
         self.portBox.setCurrentIndex(cur_index)
 
         self.baudrateSpin.setValue(config.get_config_value("baudrate"))
+
+        self.autoDetectCheck.setChecked(
+            config.get_config_value("auto_detect_profiles")
+        )
 
 
 def launch_gui(conn: "Connection") -> tuple[QApplication, Window]:

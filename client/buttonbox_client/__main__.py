@@ -36,7 +36,6 @@ class Connection:
         self.write_queue: deque[str] = deque()
 
         self.paused = False
-        self.test_mode = False
         self.in_history: list[str] = []
         self.out_history: list[str] = []
         self.full_history: list[str] = []
@@ -84,7 +83,7 @@ class Connection:
 
             # We are connected and got a handshake
 
-            if self.write_queue and not self.test_mode:
+            if self.write_queue:
                 cmd = self.write_queue.popleft()
                 self.ser.write(cmd.encode(
                     "utf-8") + b"\n")
@@ -92,7 +91,7 @@ class Connection:
                 self.out_history.append(cmd)
                 self.full_history.append(f"[OUT] {cmd}")
 
-            if self.ser.in_waiting > 0 and not self.test_mode:
+            if self.ser.in_waiting > 0:
                 line = self.ser.read_until().decode("utf-8")
                 self.log(f"Received {line} from port {self.ser.name}", "DEBUG")
                 self.in_history.append(line)

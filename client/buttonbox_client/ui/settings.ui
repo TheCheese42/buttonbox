@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>216</height>
+    <height>247</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -129,6 +129,19 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="autoDetectCheck">
+     <property name="font">
+      <font>
+       <family>Liberation Sans</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Auto detect Profiles</string>
+     </property>
+    </widget>
    </item>
    <item>
     <spacer name="verticalSpacer">

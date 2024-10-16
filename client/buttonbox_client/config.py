@@ -22,6 +22,7 @@ DEFAULT_CONFIG = {
     "default_port": "COM0" if platform.system() == "Windows" else "/dev/ttyS0",
     "active_profile": "default",
     "baudrate": 115200,
+    "auto_detect_profiles": True,
 }
 
 

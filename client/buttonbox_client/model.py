@@ -1,12 +1,13 @@
 import json
 import sys
 import time
+from functools import partial
 from itertools import chain
 from pathlib import Path
 from subprocess import getoutput
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
-from client.buttonbox_client.__main__ import Connection
+from PyQt6.QtWidgets import QRadioButton
 
 try:
     from . import config
@@ -15,6 +16,7 @@ except ImportError:
 
 if TYPE_CHECKING:
     from .__main__ import Connection
+    from .gui import Window
 
 STATE = {True: "HIGH", False: "LOW"}
 
@@ -36,15 +38,21 @@ PROFILE = dict[
 ]
 
 
-def exec_entry(entry: BUTTON_ENTRY) -> None:
+def exec_entry(
+    entry: BUTTON_ENTRY,
+    state: bool,
+    games_to_instance: dict[type["Game"], "Game"],
+) -> None:
     if entry["type"] is None:
         return
     elif entry["type"] == "command":
-        getoutput(entry["value"], encoding="utf-8")  # type: ignore[arg-type]
+        if state:
+            getoutput(entry["value"], encoding="utf-8")  # type: ignore[arg-type]  # noqa
     elif entry["type"] == "game_action":
         game = entry["value"]["game"]  # type: ignore[index]
         action = entry["value"]["action"]  # type: ignore[index]
-        getattr(GAME_LOOKUP[game], action)()
+        instance = games_to_instance[GAME_LOOKUP[game]]
+        getattr(instance, action)(state)
 
 
 class Profile:
@@ -109,21 +117,51 @@ class Profile:
     ) -> None:
         self.button_matrix[col][row] = entry
 
+    def led_manager_method(self) -> Optional[Callable[["Game"], None]]:
+        if not self.led_profile:
+            return None
+        game = GAME_LOOKUP[self.led_profile]
+        return game.led_manager
+
+    def auto_activate_method(self) -> Optional[Callable[["Game"], bool]]:
+        if not self.auto_activate:
+            return None
+        game = GAME_LOOKUP[self.auto_activate]
+        return game.detect
+
+
+class TestProfile(Profile):
+    def __init__(self) -> None:
+        self.data = Profile.empty().data
+        self.button_single["type"] = "game_action"
+        self.button_single["value"] = {
+            "game": "test",
+            "action": "button_single_state",
+        }
+        for i, row in enumerate(self.button_matrix):
+            for j, button in enumerate(row):
+                button["type"] = "game_action"
+                button["value"] = {
+                    "game": "test",
+                    "action": "button_matrix_state_"
+                }
+
 
 class Game:
     game_name = "Game"
     priority = 1
+    hidden = False
 
     def __init__(self, conn: "Connection") -> None:
         self.conn = conn
 
     @staticmethod
-    def actions() -> list[Callable[[Any], None]]:
+    def actions() -> list[Callable[[Any, bool], None]]:
         return []
 
     @staticmethod
-    def name_for_action(action: Callable[[Any], None]) -> Optional[str]:
-        lookup: dict[Callable[[Any], None], str] = {}
+    def name_for_action(action: Callable[[Any, bool], None]) -> Optional[str]:
+        lookup: dict[Callable[[Any, bool], None], str] = {}
         return lookup.get(action)
 
     def detect(self) -> bool:
@@ -155,10 +193,10 @@ class Default(Game):
     game_name = "Default"
     priority = 0
 
-    def __init__(self, conn: Connection) -> None:
+    def __init__(self, conn: "Connection") -> None:
         super().__init__(conn)
-        self.led_man_cooldown = 1
-        self.led_man_last = 0
+        self.led_man_cooldown = 1.0
+        self.led_man_last = 0.0
 
     def detect(self) -> bool:
         return True
@@ -172,34 +210,91 @@ class Default(Game):
         self.led_man_last = time.time()
 
 
+class TestGame(Game):
+    game_name = "Test"
+    priority = 0
+    hidden = True
+
+    def __init__(self, conn: "Connection", win: "Window") -> None:
+        super().__init__(conn)
+        self.win = win
+
+        # Allow calling the partials using getattr()
+        for action in self.actions():
+            if isinstance(action, partial):
+                setattr(self, action.func.__name__, action)
+
+    def button_single_state(self, state: bool) -> None:
+        self.win.tbs0.setChecked(state)
+
+    def button_matrix_state(self, i: int, state: bool) -> None:
+        self._get_btn(i).setChecked(state)
+
+    def _get_btn(self, i: int) -> QRadioButton:
+        attr = f"tb{i:02}"
+        btn: QRadioButton = getattr(self.win, attr)
+        return btn
+
+    @staticmethod
+    def actions() -> list[Callable[[Any, bool], None]]:
+        acts: list[Callable[[TestGame, bool], None]] = [
+            TestGame.button_single_state
+        ]
+        matrix = []
+        for i in range(6):
+            row = []
+            for j in range(3):
+                row.append(int(str(i) + str(j)))
+            matrix.append(row)
+
+        for i in chain(*matrix):
+            acts.append(partial(TestGame.button_matrix_state, i=i))
+
+        return acts
+
+    @staticmethod
+    def name_for_action(action: Callable[[Any, bool], None]) -> Optional[str]:
+        lookup: dict[Callable[[Any, bool], None], str] = {}
+        return lookup.get(action)
+
+    def led_manager(self) -> None:
+        self._led_extra(self.win.td0.isChecked())
+        self._led_left(self.win.td1.isChecked())
+        self._led_middle(self.win.td2.isChecked())
+        self._led_right(self.win.td3.isChecked())
+
+
 class BeamNG(Game):
     game_name = "BeamNG"
 
     @staticmethod
-    def actions() -> list[Callable[[Any], None]]:
+    def actions() -> list[Callable[[Any, bool], None]]:
         return [
             BeamNG.test,
         ]
 
     @staticmethod
-    def name_for_action(action: Callable[[Any], None]) -> Optional[str]:
-        lookup: dict[Callable[[Any], None], str] = {
+    def name_for_action(action: Callable[[Any, bool], None]) -> Optional[str]:
+        lookup: dict[Callable[[Any, bool], None], str] = {
             BeamNG.test: "Test",
         }
         return lookup.get(action)
 
-    def test(self) -> None:
+    def test(self, state: bool) -> None:
         """Just testing."""
 
 
-GAME_LOOKUP = {
+GAME_LOOKUP: dict[str, type[Game]] = {
     "default": Default,
     "beamng": BeamNG,
+    "test": TestGame,
 }
 
 
-GAME_ACTIONS: list[Callable[[Any], None]] = list(
-    chain(*[game.actions() for game in GAME_LOOKUP.values()])
+GAME_ACTIONS: list[Callable[[Any, bool], None]] = list(
+    chain(
+        *[game.actions() for game in GAME_LOOKUP.values() if not game.hidden]
+    )
 )
 
 
