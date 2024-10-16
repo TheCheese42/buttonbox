@@ -438,7 +438,6 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         if dialog.exec() == QDialog.DialogCode.Accepted:
             selected_port = dialog.portBox.currentText()
             config.set_config_value("default_port", selected_port)
-            self.select_default_port()
             selected_baudrate = dialog.baudrateSpin.value()
             config.set_config_value("baudrate", selected_baudrate)
             self.conn.port = selected_port
