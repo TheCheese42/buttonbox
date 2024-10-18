@@ -1,12 +1,19 @@
 import json
 import sys
 import time
+from contextlib import contextmanager
 from functools import partial
 from itertools import chain
 from pathlib import Path
 from subprocess import getoutput
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Union
 
+from pynput.keyboard import Controller as KController
+from pynput.keyboard import Key, KeyCode
+from pynput.keyboard import Listener as KListener
+from pynput.mouse import Button
+from pynput.mouse import Controller as MController
+from pynput.mouse import Listener as MListener
 from PyQt6.QtWidgets import QRadioButton
 
 try:
@@ -145,6 +152,148 @@ class TestProfile(Profile):
                     "game": "test",
                     "action": "button_matrix_state_"
                 }
+
+
+class Controller:
+    def __init__(self, delay: float = 0.01) -> None:
+        """
+        :param delay: Delay to wait between press and release, defaults to 0.01
+        :type delay: float, optional
+        """
+        self.kc = KController()
+        self.mc = MController()
+        self.delay = delay
+        self.keys_pressed: set[Union[Key, KeyCode]] = set()
+        self.btns_pressed = set(Button)
+
+    def on_key_pressed(self, key: Union[Key, KeyCode]) -> None:
+        self.keys_pressed.add(key)
+
+    def on_key_released(self, key: Union[Key, KeyCode]) -> None:
+        if key in self.keys_pressed:
+            self.keys_pressed.remove(key)
+
+    def on_btn_click(self, x: int, y: int, btn: Button, pressed: bool) -> None:
+        if pressed:
+            self.btns_pressed.add(btn)
+        else:
+            if btn in self.btns_pressed:
+                self.btns_pressed.remove(btn)
+
+    def is_pressed(self, thing: Union[Key, KeyCode, Button]) -> bool:
+        if isinstance(thing, Key) or isinstance(thing, KeyCode):
+            return thing in self.keys_pressed
+        return thing in self.btns_pressed
+
+    def press(
+        self,
+        key: Optional[Key] = None,
+        but: Optional[Button] = None,
+    ) -> None:
+        if key:
+            self.kc.press(key)
+        if but:
+            self.mc.press(but)
+
+    def release(
+        self,
+        key: Optional[Key] = None,
+        but: Optional[Button] = None,
+    ) -> None:
+        if key:
+            self.kc.release(key)
+        if but:
+            self.mc.release(but)
+
+    def tap(
+        self,
+        key: Optional[Key] = None,
+        but: Optional[Button] = None,
+        delay: Optional[float] = None,
+    ) -> None:
+        """Press and release a key and/or button with self.delay in between."""
+        self.press(key, but)
+        time.sleep(self.delay if delay is None else delay)
+        self.release(key, but)
+
+    @contextmanager
+    def mod(
+        self, *keys: tuple[Union[Key, KeyCode]]
+    ) -> Generator[None, None, None]:
+        """
+        Contextmanager to execute a block with some keys pressed. Checks and
+        preserves the previous key states of modifiers.
+        """
+        to_be_released: list[Key] = []
+        for key in keys:
+            if not self.is_pressed(key):
+                self.press(key)
+                to_be_released.append(key)
+
+        try:
+            yield
+        finally:
+            for key in reversed(to_be_released):
+                self.release(key)
+
+    def ctrl(
+        self,
+        key: Optional[Union[Key, KeyCode]] = None,
+        but: Optional[Button] = None,
+    ) -> None:
+        """Tap a key and/or button together with CTRL."""
+        with self.mod(Key.ctrl):
+            self.press(key, but)
+
+    def shift(
+        self,
+        key: Optional[Union[Key, KeyCode]] = None,
+        but: Optional[Button] = None,
+    ) -> None:
+        """Tap a key and/or button together with SHIFT."""
+        with self.mod(Key.shift):
+            self.press(key, but)
+
+    def alt(
+        self,
+        key: Optional[Union[Key, KeyCode]] = None,
+        but: Optional[Button] = None,
+    ) -> None:
+        """Tap a key and/or button together with ALT."""
+        with self.mod(Key.alt):
+            self.press(key, but)
+
+    def alt_gr(
+        self,
+        key: Optional[Union[Key, KeyCode]] = None,
+        but: Optional[Button] = None,
+    ) -> None:
+        """Tap a key and/or button together with ALT GR."""
+        with self.mod(Key.alt_gr):
+            self.press(key, but)
+
+    def cmd(
+        self,
+        key: Optional[Union[Key, KeyCode]] = None,
+        but: Optional[Button] = None,
+    ) -> None:
+        """Tap a key and/or button together with CMD."""
+        with self.mod(Key.cmd):
+            self.press(key, but)
+
+
+def start_controller() -> Controller:
+    controller = Controller()
+    kl = KListener(
+        on_press=controller.on_key_pressed,
+        on_release=controller.on_key_released,
+    )
+    ml = MListener(
+        on_click=controller.on_btn_click,
+    )
+    kl.start()
+    ml.start()
+    return controller
 
 
 class Game:

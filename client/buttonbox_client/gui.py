@@ -5,7 +5,7 @@ from copy import deepcopy
 from subprocess import getoutput
 from typing import TYPE_CHECKING, Any, Optional
 
-from pynput.keyboard import Controller, Key
+from pynput.keyboard import Key
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCloseEvent, QColor
 from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QLineEdit,
@@ -44,18 +44,6 @@ except ImportError:
 if TYPE_CHECKING:
     from .__main__ import Connection
 
-KEYBOARD = Controller()
-
-
-def volume_up() -> None:
-    KEYBOARD.press(Key.media_volume_up)
-    KEYBOARD.release(Key.media_volume_up)
-
-
-def volume_down() -> None:
-    KEYBOARD.press(Key.media_volume_down)
-    KEYBOARD.release(Key.media_volume_down)
-
 
 def show_error(parent: QWidget, title: str, desc: str) -> int:
     messagebox = QMessageBox(parent)
@@ -71,6 +59,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
     def __init__(self, conn: "Connection") -> None:
         super().__init__(None)
         self.conn = conn
+        self.controller = model.start_controller()
         self.main_widget_detected = False
         self.profiles = model.sort_dict(model.load_profiles())
         self.current_profile: Optional[model.Profile] = None
@@ -193,20 +182,22 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         led_manager(self.games_instances[game])
 
     def _rot_clockwise(self) -> None:
-        volume_up()
         if self.test_mode:
             if self.dial.value() >= self.dial.maximum():
                 self.dial.setValue(self.dial.minimum())
             else:
                 self.dial.setValue(self.dial.value() + 1)
+        else:
+            self.controller.tap(Key.media_volume_up)
 
     def _rot_counterclockwise(self) -> None:
-        volume_down()
         if self.test_mode:
             if self.dial.value() <= self.dial.minimum():
                 self.dial.setValue(self.dial.maximum())
             else:
                 self.dial.setValue(self.dial.value() - 1)
+        else:
+            self.controller.tap(Key.media_volume_down)
 
     def _button_single(self, state: int) -> None:
         if not self.current_profile:
