@@ -641,6 +641,7 @@
     </property>
     <addaction name="actionSettings"/>
     <addaction name="actionProfiles"/>
+    <addaction name="actionKeyboard_Shortcuts"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -775,7 +776,7 @@
     <string>Open the Microcontroller Debug Log in your OS default Text Editor</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+K</string>
+    <string>Ctrl+D</string>
    </property>
   </action>
   <action name="actionDark_Mode">
@@ -872,6 +873,18 @@
    </property>
    <property name="toolTip">
     <string>Export and open full Serial History</string>
+   </property>
+  </action>
+  <action name="actionKeyboard_Shortcuts">
+   <property name="icon">
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/command.png</normaloff>:/icons/command.png</iconset>
+   </property>
+   <property name="text">
+    <string>Keyboard Shortcuts...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+K</string>
    </property>
   </action>
  </widget>

@@ -16,6 +16,7 @@ try:
     from . import model
     from .icons import resource as _  # noqa
     from .ui.about_ui import Ui_About
+    from .ui.keyboard_ui import Ui_KeyboardShortcuts
     from .ui.licenses_ui import Ui_Licenses
     from .ui.profile_editor_ui import Ui_ProfileEditor
     from .ui.profiles_ui import Ui_Profiles
@@ -26,6 +27,7 @@ except ImportError:
     import model  # type: ignore[no-redef]
     from icons import resource as _  # noqa
     from ui.about_ui import Ui_About
+    from ui.keyboard_ui import Ui_KeyboardShortcuts
     from ui.licenses_ui import Ui_Licenses
     from ui.profile_editor_ui import Ui_ProfileEditor
     from ui.profiles_ui import Ui_Profiles
@@ -364,6 +366,9 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.actionRun_in_Background.triggered.connect(self.close)
         self.actionQuit.triggered.connect(self.full_quit)
         self.actionSettings.triggered.connect(self.settings)
+        self.actionKeyboard_Shortcuts.triggered.connect(
+            self.keyboard_shortcuts
+        )
         self.actionProfiles.triggered.connect(self.open_profiles)
         self.actionSerial_Monitor.triggered.connect(self.serial_monitor)
         self.actionLog.triggered.connect(self.open_log)
@@ -438,6 +443,11 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 "auto_detect_profiles", auto_detect_profiles
             )
             self.conn.reconnect()
+
+    def keyboard_shortcuts(self) -> None:
+        dialog = KeyboardShortcuts(self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            pass  # TODO
 
     def open_github(self) -> None:
         try:
@@ -843,6 +853,15 @@ class Settings(QDialog, Ui_Settings):  # type: ignore[misc]
         self.autoDetectCheck.setChecked(
             config.get_config_value("auto_detect_profiles")
         )
+
+
+class KeyboardShortcuts(QDialog, Ui_KeyboardShortcuts):  # type: ignore[misc]
+    def __init__(self, parent: QWidget) -> None:
+        super().__init__(parent)
+        self.setupUi(self)
+
+    def setupUi(self, *args: Any, **kwargs: Any) -> None:
+        super().setupUi(*args, **kwargs)
 
 
 def launch_gui(conn: "Connection") -> tuple[QApplication, Window]:
