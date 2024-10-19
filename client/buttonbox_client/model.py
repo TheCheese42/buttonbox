@@ -160,7 +160,7 @@ class TestProfile(Profile):
                 button["type"] = "game_action"
                 button["value"] = {
                     "game": "test",
-                    "action": f"button_matrix_state_{i}{j}"
+                    "action": f"button_matrix_state_{i}{j if j else ''}"
                 }
 
 
