@@ -72,8 +72,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.test_profile = model.TestProfile()
         self.games_instances = {}
         for game in model.GAME_LOOKUP.values():
-            if not game.hidden:
-                self.games_instances[game] = game(self.conn)
+            self.games_instances[game] = game(self.conn)
         self.conn.rotary_encoder_clockwise = self._rot_clockwise
         self.conn.rotary_encoder_counterclockwise = self._rot_counterclockwise
         self.conn.status_button_matrix = self._button_matrix
