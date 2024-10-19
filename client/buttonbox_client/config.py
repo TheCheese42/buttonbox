@@ -2,7 +2,7 @@ import json
 import platform
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from PyQt6.QtCore import QStandardPaths
 
@@ -16,6 +16,7 @@ LOGGER_PATH = CONFIG_DIR / "latest.log"
 MC_DEBUG_LOG_PATH = CONFIG_DIR / "mcdebug.log"
 SER_HISTORY_PATH = CONFIG_DIR / "serial_history.log"
 PROFILES_PATH = CONFIG_DIR / "profiles.json"
+KEYBOARD_SHORTCUTS_PATH = CONFIG_DIR / "keyboard_shortcuts.json"
 
 DEFAULT_CONFIG = {
     "dark": False,
@@ -31,8 +32,7 @@ def config_exists() -> bool:
 
 
 def create_app_dir() -> None:
-    if not CONFIG_DIR.exists():
-        CONFIG_DIR.mkdir()
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def trunc_log() -> None:
@@ -49,10 +49,17 @@ def ensure_profiles_file() -> None:
             fp.write("[]")
 
 
+def ensure_keyboard_file() -> None:
+    if not KEYBOARD_SHORTCUTS_PATH.exists():
+        with open(KEYBOARD_SHORTCUTS_PATH, "w", encoding="utf-8") as fp:
+            fp.write("[]")
+
+
 def init_config() -> None:
     create_app_dir()
     trunc_log()
     ensure_profiles_file()
+    ensure_keyboard_file()
 
     if not config_exists():
         with open(CONFIG_PATH, "w", encoding="utf-8") as fp:
@@ -82,6 +89,33 @@ def set_config_value(key: str, value: str) -> None:
     config = _get_config()
     config[key] = value
     _overwrite_config(config)
+
+
+def get_keyboard_shortcut(game: str, action: str) -> Optional[str]:
+    with open(KEYBOARD_SHORTCUTS_PATH, "r", encoding="utf-8") as fp:
+        shortcuts: list[dict[str, str]] = json.load(fp)
+    for shortcut in shortcuts:
+        if shortcut["game"] == game and shortcut["action"] == action:
+            return shortcut["shortcut"]
+    return None
+
+
+def set_keyboard_shortcut(game: str, action: str, shortcut: str) -> None:
+    with open(KEYBOARD_SHORTCUTS_PATH, "r", encoding="utf-8") as fp:
+        shortcuts: list[dict[str, str]] = json.load(fp)
+    exists = False
+    for entry in shortcuts:
+        if entry["game"] == game and entry["action"] == action:
+            exists = True
+            entry["shortcut"] = shortcut
+    if not exists:
+        shortcuts.append({
+            "game": game,
+            "action": action,
+            "shortcut": shortcut
+        })
+    with open(KEYBOARD_SHORTCUTS_PATH, "w", encoding="utf-8") as fp:
+        json.dump(shortcuts, fp)
 
 
 def log(msg: str, level: str = "INFO") -> None:

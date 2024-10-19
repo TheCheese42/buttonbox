@@ -7,15 +7,17 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from pynput.keyboard import Key
 from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QCloseEvent, QColor
-from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QLineEdit,
-                             QMainWindow, QMessageBox, QWidget)
+from PyQt6.QtGui import QCloseEvent, QColor, QKeySequence
+from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QFormLayout,
+                             QKeySequenceEdit, QLabel, QLineEdit, QMainWindow,
+                             QMessageBox, QWidget)
 from serial.tools.list_ports import comports
 
 try:
     from . import model
     from .icons import resource as _  # noqa
     from .ui.about_ui import Ui_About
+    from .ui.custom_actions_ui import Ui_CustomActionsManager
     from .ui.keyboard_ui import Ui_KeyboardShortcuts
     from .ui.licenses_ui import Ui_Licenses
     from .ui.profile_editor_ui import Ui_ProfileEditor
@@ -27,6 +29,7 @@ except ImportError:
     import model  # type: ignore[no-redef]
     from icons import resource as _  # noqa
     from ui.about_ui import Ui_About
+    from ui.custom_actions_ui import Ui_CustomActionsManager
     from ui.keyboard_ui import Ui_KeyboardShortcuts
     from ui.licenses_ui import Ui_Licenses
     from ui.profile_editor_ui import Ui_ProfileEditor
@@ -241,8 +244,8 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         if self.conn.handshaked:
             self.main_widget_detected = True
             self.statusLabel.setText("Detected")
-            self.statusLabel.palette().windowText().setColor(
-                QColor.fromRgb(50, 180, 10)
+            self.statusLabel.setStyleSheet(
+                "QLabel { color: rgb(50, 180, 10); }"
             )
             self.profileLabel.setText("Profile:")
             self.profileCombo.setPlaceholderText("Select Profile")
@@ -251,8 +254,8 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         else:
             self.main_widget_detected = False
             self.statusLabel.setText("Undetected")
-            self.statusLabel.palette().windowText().setColor(
-                QColor.fromRgb(240, 50, 30)
+            self.statusLabel.setStyleSheet(
+                "QLabel { color: rgb(240, 50, 30); }"
             )
             self.profileLabel.setText("Port:")
             self.profileCombo.setPlaceholderText("Select Port")
@@ -369,6 +372,9 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.actionKeyboard_Shortcuts.triggered.connect(
             self.keyboard_shortcuts
         )
+        self.actionManage_Custom_Actions.triggered.connect(
+            self.manage_custom_actions
+        )
         self.actionProfiles.triggered.connect(self.open_profiles)
         self.actionSerial_Monitor.triggered.connect(self.serial_monitor)
         self.actionLog.triggered.connect(self.open_log)
@@ -446,6 +452,16 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
     def keyboard_shortcuts(self) -> None:
         dialog = KeyboardShortcuts(self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            for entry in dialog.items:
+                game = entry[0]
+                action = entry[1]
+                edit = entry[2]
+                shortcut = edit.keySequence().toString()
+                config.set_keyboard_shortcut(game, action, shortcut)
+
+    def manage_custom_actions(self) -> None:
+        dialog = CustomActionManager(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             pass  # TODO
 
@@ -856,6 +872,44 @@ class Settings(QDialog, Ui_Settings):  # type: ignore[misc]
 
 
 class KeyboardShortcuts(QDialog, Ui_KeyboardShortcuts):  # type: ignore[misc]
+    def __init__(self, parent: QWidget) -> None:
+        super().__init__(parent)
+        # Ex.: [("game1", "action1", QKeySequenceEdit()), ...]
+        self.items: list[tuple[str, str, QKeySequenceEdit]] = []
+        self.setupUi(self)
+
+    def setupUi(self, *args: Any, **kwargs: Any) -> None:
+        super().setupUi(*args, **kwargs)
+        self.items.clear()
+        lo = self.shortcutsLayout
+        for action in model.SHORTCUT_ACTIONS:
+            game: Optional[type[model.Game]] = model.find_class(action)
+            if game is None:
+                config.log(
+                    "Can't find class of action "
+                    f"{action.__name__}", "ERROR",
+                )
+                show_error(
+                    self,
+                    "Invalid Action",
+                    f"Can't find game for action {action.__name__}.",
+                )
+                self.reject()
+                return
+            game: type[model.Game]  # type: ignore[no-redef]
+            game_str = model.reverse_lookup(model.GAME_LOOKUP, game)
+            form = QFormLayout()
+            label = QLabel()
+            label.setText(f"{game.game_name}: {game.name_for_action(action)}")
+            edit = QKeySequenceEdit()
+            if (sc := config.get_keyboard_shortcut(game_str, action.__name__)):
+                edit.setKeySequence(QKeySequence.fromString(sc))
+            form.addRow(label, edit)
+            self.items.append((game_str, action.__name__, edit))
+            lo.addLayout(form)
+
+
+class CustomActionManager(QDialog, Ui_CustomActionsManager):  # type: ignore[misc]  # noqa
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.setupUi(self)

@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>KeyboardShortcuts</class>
- <widget class="QDialog" name="KeyboardShortcuts">
+ <class>CustomActionsManager</class>
+ <widget class="QDialog" name="CustomActionsManager">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>338</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Keyboard Shortcuts</string>
+   <string>Custom Actions Manager</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../icons/menu_icons.qrc">
-    <normaloff>:/icons/command.png</normaloff>:/icons/command.png</iconset>
+    <normaloff>:/icons/mouse-pointer.png</normaloff>:/icons/mouse-pointer.png</iconset>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item alignment="Qt::AlignHCenter">
     <widget class="QLabel" name="profileLabel">
      <property name="sizePolicy">
@@ -39,7 +39,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Keyboard Shortcuts</string>
+      <string>Custom Actions</string>
      </property>
     </widget>
    </item>
@@ -48,29 +48,60 @@
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>40</height>
+       <height>10</height>
       </size>
      </property>
     </spacer>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="shortcutsLayout"/>
+    <widget class="QListWidget" name="listWidget">
+     <item>
+      <property name="text">
+       <string>Example Action</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Another Action</string>
+      </property>
+     </item>
+    </widget>
    </item>
    <item>
-    <spacer name="verticalSpacer_2">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Add</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Remove</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
@@ -91,7 +122,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>KeyboardShortcuts</receiver>
+   <receiver>CustomActionsManager</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -107,7 +138,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>KeyboardShortcuts</receiver>
+   <receiver>CustomActionsManager</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

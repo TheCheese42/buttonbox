@@ -45,6 +45,16 @@ PROFILE = dict[
 ]
 
 
+SHORTCUT_ACTIONS: list[Callable[[Any, bool], None]] = []
+
+
+def register_shortcut_action(
+    func: Callable[[Any, bool], Any]
+) -> Callable[[Any, bool], Any]:
+    SHORTCUT_ACTIONS.append(func)
+    return func
+
+
 def exec_entry(
     entry: BUTTON_ENTRY,
     state: bool,
@@ -429,6 +439,7 @@ class BeamNG(Game):
         }
         return lookup.get(action)
 
+    @register_shortcut_action
     def test(self, state: bool) -> None:
         """Just testing."""
 

@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>mouse-pointer.png</file>
     <file>command.png</file>
     <file>clock.png</file>
     <file>pause-circle.png</file>

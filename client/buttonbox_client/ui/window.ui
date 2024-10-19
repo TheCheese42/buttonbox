@@ -51,33 +51,6 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="palette">
-         <palette>
-          <active>
-           <colorrole role="WindowText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>51</red>
-              <green>181</green>
-              <blue>11</blue>
-             </color>
-            </brush>
-           </colorrole>
-          </active>
-          <inactive>
-           <colorrole role="WindowText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>51</red>
-              <green>181</green>
-              <blue>11</blue>
-             </color>
-            </brush>
-           </colorrole>
-          </inactive>
-          <disabled/>
-         </palette>
-        </property>
         <property name="font">
          <font>
           <family>Liberation Sans</family>
@@ -642,6 +615,7 @@
     <addaction name="actionSettings"/>
     <addaction name="actionProfiles"/>
     <addaction name="actionKeyboard_Shortcuts"/>
+    <addaction name="actionManage_Custom_Actions"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -885,6 +859,18 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+K</string>
+   </property>
+  </action>
+  <action name="actionManage_Custom_Actions">
+   <property name="icon">
+    <iconset resource="../icons/menu_icons.qrc">
+     <normaloff>:/icons/mouse-pointer.png</normaloff>:/icons/mouse-pointer.png</iconset>
+   </property>
+   <property name="text">
+    <string>Manage Custom Actions...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
    </property>
   </action>
  </widget>
