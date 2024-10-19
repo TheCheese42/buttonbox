@@ -355,12 +355,14 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         if value:
             self.test_mode = True
             self.testModeFrame.setEnabled(True)
+            self.set_profile("test")
         else:
             self.test_mode = False
             if self.conn.connected and self.conn.ser:
-                self.conn.ser.read_all()
+                self.conn.ser.read_all()  # TODO try-pass
             self.conn.write_queue.clear()
             self.testModeFrame.setEnabled(False)
+            self.current_profile = None
 
     def connectSignalsSlots(self) -> None:
         self.profileCombo.currentTextChanged.connect(
