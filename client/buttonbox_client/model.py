@@ -160,7 +160,7 @@ class TestProfile(Profile):
                 button["type"] = "game_action"
                 button["value"] = {
                     "game": "test",
-                    "action": f"button_matrix_state_{i}{j if j else ''}"
+                    "action": f"button_matrix_state_{i}{j if j or i else ''}"
                 }
 
 
@@ -407,7 +407,7 @@ class TestGame(Game):
             matrix.append(row)
 
         for i in chain(*matrix):
-            part = partial(TestGame.button_matrix_state, i=i)
+            part = partial(TestGame.button_matrix_state, i)
             part.__name__ = f"button_matrix_state_{i}"  # type: ignore[attr-defined]  # noqa
             acts.append(part)
 
