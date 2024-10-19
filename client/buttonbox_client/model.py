@@ -124,7 +124,7 @@ class Profile:
         self.data["button_matrix"] = val
 
     def get_button_matrix_entry_for(self, row: int, col: int) -> BUTTON_ENTRY:
-        return self.button_matrix[col][row]
+        return self.button_matrix[row][col]
 
     def set_button_matrix_entry_for(
         self,
@@ -132,7 +132,7 @@ class Profile:
         col: int,
         entry: BUTTON_ENTRY,
     ) -> None:
-        self.button_matrix[col][row] = entry
+        self.button_matrix[row][col] = entry
 
     def led_manager_method(self) -> Optional[Callable[["Game"], None]]:
         if not self.led_profile:
