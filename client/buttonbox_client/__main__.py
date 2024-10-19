@@ -56,12 +56,12 @@ class Connection:
     def run(self) -> None:
         while True:
             if self.paused:
-                time.sleep(0.05)
+                time.sleep(0.1)
                 continue
 
             if not self.ser or not self.connected or not self.ser.is_open:
                 if not self.reconnect():
-                    time.sleep(0.05)
+                    time.sleep(1)
                 continue
             elif not self.handshaked:
                 self.ser.read_all()

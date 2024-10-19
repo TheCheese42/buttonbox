@@ -327,6 +327,8 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         if text == "test":
             self.current_profile = self.test_profile
             return
+        if text.lower() == "none":
+            return
         profile = None
         for prof in self.profiles.values():
             if prof.name == text:
