@@ -11,6 +11,7 @@ from PyQt6.QtGui import QCloseEvent, QKeySequence
 from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QFormLayout,
                              QKeySequenceEdit, QLabel, QLineEdit, QMainWindow,
                              QMessageBox, QWidget)
+from serial import SerialException
 from serial.tools.list_ports import comports
 
 try:
@@ -359,7 +360,10 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         else:
             self.test_mode = False
             if self.conn.connected and self.conn.ser:
-                self.conn.ser.read_all()  # TODO try-pass
+                try:
+                    self.conn.ser.read_all()
+                except SerialException:
+                    pass
             self.conn.write_queue.clear()
             self.testModeFrame.setEnabled(False)
             self.current_profile = None

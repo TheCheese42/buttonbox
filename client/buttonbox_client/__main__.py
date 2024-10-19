@@ -64,11 +64,24 @@ class Connection:
                     time.sleep(1)
                 continue
             elif not self.handshaked:
-                self.ser.read_all()
-                self.ser.write(b"HANDSHAKE\n")
+                try:
+                    self.ser.read_all()
+                except serial.SerialException:
+                    pass
+                try:
+                    self.ser.write(b"HANDSHAKE\n")
+                except serial.SerialException as e:
+                    self.log(f"Error writing handshake: {e}", "WARNING")
+                    continue
                 for _ in range(100):
                     if self.ser.in_waiting > 0:
-                        if self.ser.read_until().decode("utf-8").startswith(
+                        try:
+                            msg = self.ser.read_until().decode("utf-8")
+                        except serial.SerialException as e:
+                            self.log(f"Error reading potential handshake: {e}",
+                                     "WARNING")
+                            continue
+                        if msg.startswith(
                             "HANDSHAKE"
                         ):
                             self.log(
@@ -85,14 +98,23 @@ class Connection:
 
             if self.write_queue:
                 cmd = self.write_queue.popleft()
-                self.ser.write(cmd.encode(
-                    "utf-8") + b"\n")
+                try:
+                    self.ser.write(cmd.encode("utf-8") + b"\n")
+                except serial.SerialException as e:
+                    self.log(f"Error writing '{cmd}': {e}", "WARNING")
+                    self.write_queue.append(cmd)
+                    continue
                 self.log(f"Wrote {cmd} to port {self.ser.name}", "DEBUG")
                 self.out_history.append(cmd)
                 self.full_history.append(f"[OUT] {cmd}")
 
             if self.ser.in_waiting > 0:
-                line = self.ser.read_until().decode("utf-8")
+                try:
+                    line = self.ser.read_until().decode("utf-8")
+                except serial.SerialException as e:
+                    self.log(f"Error reading waiting bytes: {e}",
+                             "WARNING")
+                    continue
                 self.log(f"Received {line} from port {self.ser.name}", "DEBUG")
                 self.in_history.append(line)
                 # Double space for alignment with [OUT]
