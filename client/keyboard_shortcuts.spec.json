@@ -1,0 +1,12 @@
+[
+    {
+        "game": "Game",
+        "action": "action",
+        "shortcut": "Ctrl+T"
+    },
+    {
+        "game": "Game2",
+        "action": "action2",
+        "shortcut": "Ctrl+Z"
+    }
+]
