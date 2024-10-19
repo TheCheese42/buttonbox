@@ -72,7 +72,10 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.test_profile = model.TestProfile()
         self.games_instances = {}
         for game in model.GAME_LOOKUP.values():
-            self.games_instances[game] = game(self.conn)
+            if game == model.TestGame:
+                self.games_instances[game] = game(self.conn, self)
+            else:
+                self.games_instances[game] = game(self.conn)
         self.conn.rotary_encoder_clockwise = self._rot_clockwise
         self.conn.rotary_encoder_counterclockwise = self._rot_counterclockwise
         self.conn.status_button_matrix = self._button_matrix
@@ -81,7 +84,6 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.conn.mc_warning = self._mc_warning
         self.conn.mc_error = self._mc_error
         self.conn.mc_critical = self._mc_critical
-        self.set_profile("test")
         self.setupUi(self)
 
         self.connectSignalsSlots()
@@ -327,6 +329,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.current_profile = self.test_profile
             return
         if text.lower() == "none":
+            self.current_profile = None
             return
         profile = None
         for prof in self.profiles.values():
