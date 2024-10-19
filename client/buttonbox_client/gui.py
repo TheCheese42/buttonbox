@@ -860,6 +860,7 @@ class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
         cmd = self.cmdEdit.text()
         if cmd:
             self.conn.write_queue.append(cmd)
+        self.cmdEdit.setText("")
 
     def clear(self) -> None:
         self.from_index = len(self.conn.in_history)
