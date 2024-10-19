@@ -17,11 +17,11 @@ MC_DEBUG_LOG_PATH = CONFIG_DIR / "mcdebug.log"
 SER_HISTORY_PATH = CONFIG_DIR / "serial_history.log"
 PROFILES_PATH = CONFIG_DIR / "profiles.json"
 KEYBOARD_SHORTCUTS_PATH = CONFIG_DIR / "keyboard_shortcuts.json"
+CUSTOM_ACTIONS_PATH = CONFIG_DIR / "custom_actions.json"
 
 DEFAULT_CONFIG = {
     "dark": False,
     "default_port": "COM0" if platform.system() == "Windows" else "/dev/ttyS0",
-    "active_profile": "default",
     "baudrate": 115200,
     "auto_detect_profiles": True,
 }
@@ -55,11 +55,18 @@ def ensure_keyboard_file() -> None:
             fp.write("[]")
 
 
+def ensure_custom_actions_file() -> None:
+    if not CUSTOM_ACTIONS_PATH.exists():
+        with open(CUSTOM_ACTIONS_PATH, "w", encoding="utf-8") as fp:
+            fp.write("[]")
+
+
 def init_config() -> None:
     create_app_dir()
     trunc_log()
     ensure_profiles_file()
     ensure_keyboard_file()
+    ensure_custom_actions_file()
 
     if not config_exists():
         with open(CONFIG_PATH, "w", encoding="utf-8") as fp:
@@ -116,6 +123,17 @@ def set_keyboard_shortcut(game: str, action: str, shortcut: str) -> None:
         })
     with open(KEYBOARD_SHORTCUTS_PATH, "w", encoding="utf-8") as fp:
         json.dump(shortcuts, fp)
+
+
+def get_custom_actions() -> list[str]:
+    with open(CUSTOM_ACTIONS_PATH, "r", encoding="utf-8") as fp:
+        actions: list[str] = json.load(fp)
+    return actions
+
+
+def set_custom_actions(actions: list[str]) -> None:
+    with open(CUSTOM_ACTIONS_PATH, "w", encoding="utf-8") as fp:
+        json.dump(actions, fp)
 
 
 def log(msg: str, level: str = "INFO") -> None:

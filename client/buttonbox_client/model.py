@@ -423,6 +423,32 @@ class TestGame(Game):
         self._led_right(self.win.td3.isChecked())
 
 
+class Custom(Game):
+    game_name = "Custom"
+
+    def __init__(self, conn: "Connection") -> None:
+        super().__init__(conn)
+        self._actions: list[Callable[[Any, bool], None]] = []
+
+    @staticmethod
+    def action() -> list[Callable[[Any, bool], None]]:
+        return []  # TODO
+
+    @staticmethod
+    def name_for_action(action: Callable[[Any, bool], None]) -> Optional[str]:
+        lookup: dict[Callable[[Any, bool], None], str] = {}  # TODO
+        return lookup.get(action)
+
+    def add_action(self, action: Callable[[Any, bool], None]) -> None:
+        self._actions.append(action)
+
+    def remove_action(self, action: Callable[[Any, bool], None]) -> None:
+        self._actions.remove(action)
+
+    def get_actions(self) -> list[Callable[[Any, bool], None]]:
+        return self._actions
+
+
 class BeamNG(Game):
     game_name = "BeamNG"
 
@@ -448,6 +474,7 @@ GAME_LOOKUP: dict[str, type[Game]] = {
     "default": Default,
     "beamng": BeamNG,
     "test": TestGame,
+    "custom": Custom,
 }
 
 

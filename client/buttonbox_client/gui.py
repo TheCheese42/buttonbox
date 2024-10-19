@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from pynput.keyboard import Key
 from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QCloseEvent, QColor, QKeySequence
+from PyQt6.QtGui import QCloseEvent, QKeySequence
 from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QFormLayout,
                              QKeySequenceEdit, QLabel, QLineEdit, QMainWindow,
                              QMessageBox, QWidget)
@@ -656,6 +656,12 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
             if (g := model.GAME_LOOKUP.get(item)) and g.hidden:
                 # Filter hidden
                 continue
+            if (
+                (g := model.GAME_LOOKUP.get(item))
+                and g.detect == model.Game.detect
+            ):
+                # Filter those that don't implement detect()
+                continue
 
             self.autoActivateCombo.addItem(item)
             if self.profile.auto_activate == item:
@@ -666,6 +672,12 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
         for i, item in enumerate(["Off"] + list(model.GAME_LOOKUP.keys())):
             if (g := model.GAME_LOOKUP.get(item)) and g.hidden:
                 # Filter hidden
+                continue
+            if (
+                (g := model.GAME_LOOKUP.get(item))
+                and g.led_manager == model.Game.led_manager
+            ):
+                # Filter those that don't implement led_manager()
                 continue
 
             self.ledCombo.addItem(item)
