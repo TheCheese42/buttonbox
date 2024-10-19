@@ -849,7 +849,6 @@ class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
         self.monitorText.clear()
 
     def refresh(self) -> None:
-        self.conn.in_history.append("tet")
         self.monitorText.clear()
         history = self.conn.in_history.copy()
         history.append("")
