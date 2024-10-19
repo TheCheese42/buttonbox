@@ -73,7 +73,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.games_instances = {}
         for game in model.GAME_LOOKUP.values():
             if game == model.TestGame:
-                self.games_instances[game] = game(self.conn, self)
+                self.games_instances[game] = game(self.conn, self)  # type: ignore[call-arg]  # noqa
             else:
                 self.games_instances[game] = game(self.conn)
         self.conn.rotary_encoder_clockwise = self._rot_clockwise
@@ -849,10 +849,13 @@ class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
         self.monitorText.clear()
 
     def refresh(self) -> None:
+        self.conn.in_history.append("tet")
         self.monitorText.clear()
         history = self.conn.in_history.copy()
         history.append("")
-        self.monitorText.setPlainText("\n".join(history[self.from_index:]))
+        new_text = "\n".join(history[self.from_index:])
+        if self.monitorText.toPlainText() != new_text:
+            self.monitorText.setPlainText(new_text)
 
     def enter(self) -> None:
         cmd = self.cmdEdit.text()

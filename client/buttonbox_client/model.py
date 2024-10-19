@@ -160,7 +160,7 @@ class TestProfile(Profile):
                 button["type"] = "game_action"
                 button["value"] = {
                     "game": "test",
-                    "action": "button_matrix_state_"
+                    "action": f"button_matrix_state_{i}{j}"
                 }
 
 
@@ -381,7 +381,7 @@ class TestGame(Game):
         # Allow calling the partials using getattr()
         for action in self.actions():
             if isinstance(action, partial):
-                setattr(self, action.func.__name__, action)
+                setattr(self, action.__name__, action)  # type: ignore[attr-defined]  # noqa
 
     def button_single_state(self, state: bool) -> None:
         self.win.tbs0.setChecked(state)
@@ -407,7 +407,9 @@ class TestGame(Game):
             matrix.append(row)
 
         for i in chain(*matrix):
-            acts.append(partial(TestGame.button_matrix_state, i=i))
+            part = partial(TestGame.button_matrix_state, i=i)
+            part.__name__ = f"button_matrix_state_{i}"  # type: ignore[attr-defined]  # noqa
+            acts.append(part)
 
         return acts
 
@@ -471,6 +473,7 @@ class BeamNG(Game):
 
 
 GAME_LOOKUP: dict[str, type[Game]] = {
+    "game": Game,
     "default": Default,
     "beamng": BeamNG,
     "test": TestGame,
