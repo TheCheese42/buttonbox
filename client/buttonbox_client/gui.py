@@ -872,9 +872,13 @@ class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
     def refresh(self) -> None:
         history = self.conn.in_history.copy()
         history.append("")
-        new_text = "".join(history[self.from_index:])
+        # [:-1] to strip the last newline
+        new_text = "".join(history[self.from_index:])[:-1]
         if self.monitorText.toPlainText() != new_text:
             self.monitorText.setPlainText(new_text)
+            self.monitorText.verticalScrollBar().setValue(
+                self.monitorText.verticalScrollBar().maximum()
+            )
 
     def enter(self) -> None:
         cmd = self.cmdEdit.text()
