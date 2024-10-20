@@ -47,6 +47,10 @@ PROFILE = dict[
 
 SHORTCUT_ACTIONS: list[Callable[[Any, bool], None]] = []
 
+# A command should not be triggered again just because the button is held.
+# It should only be triggered again if the button was released in between.
+COMMANDS_TO_BE_RELEASED: list[str] = []
+
 
 def register_shortcut_action(
     func: Callable[[Any, bool], Any]
@@ -63,8 +67,17 @@ def exec_entry(
     if entry["type"] is None:
         return
     elif entry["type"] == "command":
+        cmd: str = entry["value"]  # type: ignore[assignment]
         if state:
-            getoutput(entry["value"], encoding="utf-8")  # type: ignore[arg-type]  # noqa
+            if cmd in COMMANDS_TO_BE_RELEASED:
+                return
+            getoutput(cmd, encoding="utf-8")
+            COMMANDS_TO_BE_RELEASED.append(cmd)
+        else:
+            try:
+                COMMANDS_TO_BE_RELEASED.remove(cmd)
+            except ValueError:
+                pass
     elif entry["type"] == "game_action":
         game = entry["value"]["game"]  # type: ignore[index]
         action = entry["value"]["action"]  # type: ignore[index]

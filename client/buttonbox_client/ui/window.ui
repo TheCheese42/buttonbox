@@ -855,7 +855,7 @@
   <action name="actionKeyboard_Shortcuts">
    <property name="icon">
     <iconset resource="../icons/menu_icons.qrc">
-     <normaloff>:/icons/command.png</normaloff>:/icons/command.png</iconset>
+     <normaloff>:/icons/zap.png</normaloff>:/icons/zap.png</iconset>
    </property>
    <property name="text">
     <string>Keyboard Shortcuts...</string>
