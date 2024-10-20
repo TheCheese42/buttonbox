@@ -82,6 +82,7 @@ class Connection:
                             f"bytes: {e}",
                             "WARNING",
                         )
+                        continue
                     if in_waiting > 0:
                         try:
                             msg = self.ser.read_until().decode("utf-8")
