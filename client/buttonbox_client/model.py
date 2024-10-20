@@ -150,6 +150,7 @@ class Profile:
 class TestProfile(Profile):
     def __init__(self) -> None:
         self.data = Profile.empty().data
+        self.led_profile = "test"
         self.button_single["type"] = "game_action"
         self.button_single["value"] = {
             "game": "test",
@@ -160,7 +161,7 @@ class TestProfile(Profile):
                 button["type"] = "game_action"
                 button["value"] = {
                     "game": "test",
-                    "action": f"button_matrix_state_{i}{j if j or i else ''}"
+                    "action": f"button_matrix_state_{i}{j}"
                 }
 
 
@@ -378,10 +379,12 @@ class TestGame(Game):
         super().__init__(conn)
         self.win = win
 
-        # Allow calling the partials using getattr()
+        # Allow calling the lambdas using getattr()
         for action in self.actions():
-            if isinstance(action, partial):
-                setattr(self, action.__name__, action)  # type: ignore[attr-defined]  # noqa
+            if action.__name__ == "button_single_state":
+                continue
+            part = partial(action, self)
+            setattr(self, action.__name__, part)
 
     def button_single_state(self, state: bool) -> None:
         self.win.tbs0.setChecked(state)
@@ -406,10 +409,18 @@ class TestGame(Game):
                 row.append(int(str(i) + str(j)))
             matrix.append(row)
 
+        def create_lambda(index: int) -> Callable[[Any, bool], None]:
+            # Need to create a lambda using an inner function to prevent
+            # modifying the index in the outer scope. This would make all
+            # lambdas have 52 as index, instead of their respective indices.
+            return lambda self, state: TestGame.button_matrix_state(
+                self, index, state
+            )
+
         for i in chain(*matrix):
-            part = partial(TestGame.button_matrix_state, i)
-            part.__name__ = f"button_matrix_state_{i}"  # type: ignore[attr-defined]  # noqa
-            acts.append(part)
+            lamb = create_lambda(i)
+            lamb.__name__ = f"button_matrix_state_{i:02}"
+            acts.append(lamb)
 
         return acts
 

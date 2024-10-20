@@ -135,7 +135,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
 
         self.ledManagerTimer = QTimer(self)
         self.ledManagerTimer.timeout.connect(self.call_led_manager)
-        self.ledManagerTimer.start(50)
+        self.ledManagerTimer.start(100)
 
     def detect_profiles(self) -> None:
         if not config.get_config_value("auto_detect_profiles"):
@@ -662,37 +662,45 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
 
         # Auto activate
         self.autoActivateCombo.clear()
+        # Need to keep track as index will decrease with every hidden item
+        amount_hidden = 0
         for i, item in enumerate(["Off"] + list(model.GAME_LOOKUP.keys())):
             if (g := model.GAME_LOOKUP.get(item)) and g.hidden:
                 # Filter hidden
+                amount_hidden += 1
                 continue
             if (
                 (g := model.GAME_LOOKUP.get(item))
                 and g.detect == model.Game.detect
             ):
                 # Filter those that don't implement detect()
+                amount_hidden += 1
                 continue
 
             self.autoActivateCombo.addItem(item)
             if self.profile.auto_activate == item:
-                self.autoActivateCombo.setCurrentIndex(i)
+                self.autoActivateCombo.setCurrentIndex(i - amount_hidden)
 
         # LED profile
         self.ledCombo.clear()
+        # Need to keep track as index will decrease with every hidden item
+        amount_hidden = 0
         for i, item in enumerate(["Off"] + list(model.GAME_LOOKUP.keys())):
             if (g := model.GAME_LOOKUP.get(item)) and g.hidden:
                 # Filter hidden
+                amount_hidden += 1
                 continue
             if (
                 (g := model.GAME_LOOKUP.get(item))
                 and g.led_manager == model.Game.led_manager
             ):
                 # Filter those that don't implement led_manager()
+                amount_hidden += 1
                 continue
 
             self.ledCombo.addItem(item)
             if self.profile.led_profile == item:
-                self.ledCombo.setCurrentIndex(i)
+                self.ledCombo.setCurrentIndex(i - amount_hidden)
 
         # Single button
         if (type := self.profile.button_single["type"]) is None:
@@ -765,7 +773,7 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
             index = self.matrixTable.selectedIndexes()[0]
         except KeyError:
             return
-        self.selected_matrix_point = (index.column(), index.row())
+        self.selected_matrix_point = (index.row(), index.column())
         self.matrixTypeCombo.setEnabled(True)
         if (
             type := self.profile.get_button_matrix_entry_for(
@@ -858,7 +866,7 @@ class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
         self.monitorText.clear()
         history = self.conn.in_history.copy()
         history.append("")
-        new_text = "\n".join(history[self.from_index:])
+        new_text = "".join(history[self.from_index:])
         if self.monitorText.toPlainText() != new_text:
             self.monitorText.setPlainText(new_text)
 

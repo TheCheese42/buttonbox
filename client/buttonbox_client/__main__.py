@@ -90,8 +90,9 @@ class Connection:
                             )
                             self.handshaked = True
                             break
+                    time.sleep(0.01)
                 else:
-                    time.sleep(0.05)
+                    time.sleep(1)
                 continue
 
             # We are connected and got a handshake
@@ -106,16 +107,24 @@ class Connection:
                     continue
                 self.log(f"Wrote {cmd} to port {self.ser.name}", "DEBUG")
                 self.out_history.append(cmd)
-                self.full_history.append(f"[OUT] {cmd}")
+                self.full_history.append(f"[OUT] {cmd}\n")
 
-            if self.ser.in_waiting > 0:
+            try:
+                in_waiting = self.ser.in_waiting
+            except (OSError, TypeError) as e:
+                self.log(
+                    f"Received error when checking for available bytes: {e}",
+                    "WARNING",
+                )
+            if in_waiting > 0:
                 try:
                     line = self.ser.read_until().decode("utf-8")
                 except serial.SerialException as e:
                     self.log(f"Error reading waiting bytes: {e}",
                              "WARNING")
                     continue
-                self.log(f"Received {line} from port {self.ser.name}", "DEBUG")
+                self.log(f"Received {line.replace('\n', '')} from port "
+                         f"{self.ser.name}", "DEBUG")
                 self.in_history.append(line)
                 # Double space for alignment with [OUT]
                 self.full_history.append(f"[IN]  {line}")
@@ -158,6 +167,8 @@ class Connection:
         elif task[0] == "CRITICAL":
             self.mc_critical(" ".join(task[1:]))
             config.log_mc(line)
+        else:
+            self.log(f"Received invalid task {line}", "WARNING")
 
     def connect(self) -> bool:
         try:
