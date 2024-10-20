@@ -858,7 +858,7 @@ class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
         self.conn = conn
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
-        self.timer.start(50)
+        self.timer.start(100)
         self.from_index = 0
 
     def connectSignalsSlots(self) -> None:
@@ -870,7 +870,6 @@ class SerialMonitor(QDialog, Ui_SerialMonitor):  # type: ignore[misc]
         self.monitorText.clear()
 
     def refresh(self) -> None:
-        self.monitorText.clear()
         history = self.conn.in_history.copy()
         history.append("")
         new_text = "".join(history[self.from_index:])

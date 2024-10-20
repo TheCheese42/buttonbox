@@ -74,7 +74,15 @@ class Connection:
                     self.log(f"Error writing handshake: {e}", "WARNING")
                     continue
                 for _ in range(100):
-                    if self.ser.in_waiting > 0:
+                    try:
+                        in_waiting = self.ser.in_waiting
+                    except (OSError, TypeError) as e:
+                        self.log(
+                            "Received error when checking for available "
+                            f"bytes: {e}",
+                            "WARNING",
+                        )
+                    if in_waiting > 0:
                         try:
                             msg = self.ser.read_until().decode("utf-8")
                         except serial.SerialException as e:
