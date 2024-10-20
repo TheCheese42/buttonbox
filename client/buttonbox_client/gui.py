@@ -241,6 +241,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.setMinimumSize(self.size())
         self.refreshPorts()
         self.updateMainWidget()
+        self.testModeFrame.setDisabled(True)
 
     def updateMainWidget(self) -> None:
         if self.conn.handshaked:
@@ -331,6 +332,9 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             return
         if text.lower() == "none":
             self.current_profile = None
+            if self.main_widget_detected:
+                # 0 is "None"
+                self.profileCombo.setCurrentIndex(0)
             return
         profile = None
         for prof in self.profiles.values():
@@ -348,9 +352,12 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             )
             return
         self.current_profile = profile
+        if self.main_widget_detected:
+            self.profileCombo.setCurrentText(profile.name)
 
     def test_check_box_changed(self) -> None:
         value = self.testCheckBox.isChecked()
+        self.profileCombo.setDisabled(value)
         if value == self.test_mode:
             return
         if value:

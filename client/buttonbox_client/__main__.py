@@ -129,6 +129,7 @@ class Connection:
                 # Double space for alignment with [OUT]
                 self.full_history.append(f"[IN]  {line}")
                 self.process_task(line)
+            time.sleep(0.1)
 
     def disconnect(self) -> None:
         self.connected = False
