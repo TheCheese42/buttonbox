@@ -106,39 +106,46 @@ class Connection:
 
             # We are connected and got a handshake
 
-            if self.write_queue:
-                cmd = self.write_queue.popleft()
-                try:
-                    self.ser.write(cmd.encode("utf-8") + b"\n")
-                except serial.SerialException as e:
-                    self.log(f"Error writing '{cmd}': {e}", "WARNING")
-                    self.write_queue.append(cmd)
-                    continue
-                self.log(f"Wrote {cmd} to port {self.ser.name}", "DEBUG")
-                self.out_history.append(cmd)
-                self.full_history.append(f"[OUT] {cmd}\n")
+            while True:
+                if self.write_queue:
+                    cmd = self.write_queue.popleft()
+                    try:
+                        self.ser.write(cmd.encode("utf-8") + b"\n")
+                    except serial.SerialException as e:
+                        self.log(f"Error writing '{cmd}': {e}", "WARNING")
+                        self.write_queue.append(cmd)
+                        continue
+                    self.log(f"Wrote {cmd} to port {self.ser.name}", "DEBUG")
+                    self.out_history.append(cmd)
+                    self.full_history.append(f"[OUT] {cmd}\n")
+                else:
+                    break
 
-            try:
-                in_waiting = self.ser.in_waiting
-            except (OSError, TypeError) as e:
-                self.log(
-                    f"Received error when checking for available bytes: {e}",
-                    "WARNING",
-                )
-            if in_waiting > 0:
+            while True:
                 try:
-                    line = self.ser.read_until().decode("utf-8")
-                except serial.SerialException as e:
-                    self.log(f"Error reading waiting bytes: {e}",
-                             "WARNING")
-                    continue
-                self.log(f"Received {line.replace('\n', '')} from port "
-                         f"{self.ser.name}", "DEBUG")
-                self.in_history.append(line)
-                # Double space for alignment with [OUT]
-                self.full_history.append(f"[IN]  {line}")
-                self.process_task(line)
-            time.sleep(0.1)
+                    in_waiting = self.ser.in_waiting
+                except (OSError, TypeError) as e:
+                    self.log(
+                        "Received error when checking for available bytes: "
+                        f"{e}", "WARNING",
+                    )
+                    break
+                if in_waiting > 0:
+                    try:
+                        line = self.ser.read_until().decode("utf-8")
+                    except serial.SerialException as e:
+                        self.log(f"Error reading waiting bytes: {e}",
+                                 "WARNING")
+                        continue
+                    self.log(f"Received {line.replace('\n', '')} from port "
+                             f"{self.ser.name}", "DEBUG")
+                    self.in_history.append(line)
+                    # Double space for alignment with [OUT]
+                    self.full_history.append(f"[IN]  {line}")
+                    self.process_task(line)
+                else:
+                    break
+            time.sleep(0.01)
 
     def disconnect(self) -> None:
         self.connected = False
@@ -214,10 +221,13 @@ def main() -> None:
     def show_gui(_) -> None:  # type: ignore[no-untyped-def]
         win.show()
 
-    def quit_app(_) -> None:  # type: ignore[no-untyped-def]
+    def quit_app(icon) -> None:  # type: ignore[no-untyped-def]
+        config.log("Received QUIT signal from tray icon", "INFO")
         conn.close()
         win.close()
         app.quit()
+        icon.stop()
+        config.log("Exiting", "INFO")
         sys.exit(0)
 
     icon = pystray.Icon(
@@ -234,7 +244,6 @@ def main() -> None:
 
     icon.run_detached()
     config.log("Started system tray icon", "INFO")
-    win.hide()
     conn_thread = Thread(target=conn.run, name="buttonbox_serial", daemon=True)
     config.log("Starting serial connection event loop...", "INFO")
     conn_thread.start()
@@ -249,8 +258,6 @@ def main() -> None:
 
     icon.stop()
     conn.close()
-    win.close()
-    app.quit()
     sys.exit(code)
 
 

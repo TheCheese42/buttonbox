@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>247</height>
+    <height>268</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -140,6 +140,19 @@
      </property>
      <property name="text">
       <string>Auto detect Profiles</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="hideToTrayCheck">
+     <property name="font">
+      <font>
+       <family>Liberation Sans</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Hide to System Tray on Startup</string>
      </property>
     </widget>
    </item>

@@ -137,6 +137,9 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.ledManagerTimer.timeout.connect(self.call_led_manager)
         self.ledManagerTimer.start(100)
 
+        if config.get_config_value("hide_to_tray"):
+            QTimer.singleShot(500, self.hide)
+
     def detect_profiles(self) -> None:
         if not config.get_config_value("auto_detect_profiles"):
             return
@@ -430,9 +433,13 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         return False
 
     def full_quit(self) -> None:
-        self.conn.close()
         super().close()
-        sys.exit(0)
+        instance = QApplication.instance()
+        if instance is None:
+            self.conn.close()
+            sys.exit(0)
+        else:
+            instance.quit()
 
     def about(self) -> None:
         dialog = AboutDialog(self)
@@ -464,6 +471,10 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             auto_detect_profiles = dialog.autoDetectCheck.isChecked()
             config.set_config_value(
                 "auto_detect_profiles", auto_detect_profiles
+            )
+            hide_to_tray = dialog.hideToTrayCheck.isChecked()
+            config.set_config_value(
+                "hide_to_tray", hide_to_tray
             )
             self.conn.reconnect()
 
@@ -911,6 +922,10 @@ class Settings(QDialog, Ui_Settings):  # type: ignore[misc]
 
         self.autoDetectCheck.setChecked(
             config.get_config_value("auto_detect_profiles")
+        )
+
+        self.hideToTrayCheck.setChecked(
+            config.get_config_value("hide_to_tray")
         )
 
 
