@@ -1,0 +1,40 @@
+name: Linting and Static Analysis
+
+on:
+    push:
+        branches: [ "main", "dev" ]
+    pull_request:
+        branches: [ "main", "dev" ]
+
+permissions:
+    contents: write
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+        - uses: actions/checkout@v3
+        - name: Set up Python 3.12
+          uses: actions/setup-python@v3
+          with:
+            python-version: "3.12"
+        - name: Install Dependencies
+          run: |
+            python -m pip install -U pip
+            pip install -r requirements.txt
+            pip install -r dev-requirements.txt
+        - name: Format with isort
+          run: |
+            isort client/buttonbox_client
+        - name: Lint with flake8
+          run: |
+            flake8 --exclude client/buttonbox_client/ui,resource.py \
+                client/buttonbox_client
+        - name: Typecheck with mypy
+          run: |
+            mypy --strict --exclude resource.py \
+                --exclude .+_ui.py --warn-unused-ignore \
+                --ignore-missing-imports --follow-imports skip \
+                client/buttonbox_client
+            
