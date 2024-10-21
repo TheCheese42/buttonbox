@@ -84,7 +84,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             model.Custom.add_action(action, name)
         model.register_custom_shortcut_actions()
         model.populate_game_actions()
-        self.games_instances[model.Custom].register_lambdas()
+        self.games_instances[model.Custom].register_lambdas()  # type: ignore[attr-defined]  # noqa
         self.conn.rotary_encoder_clockwise = self._rot_clockwise
         self.conn.rotary_encoder_counterclockwise = self._rot_counterclockwise
         self.conn.status_button_matrix = self._button_matrix
@@ -525,7 +525,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             config.set_custom_actions(model.CUSTOM_ACTIONS)
             model.register_custom_shortcut_actions()
             model.populate_game_actions()
-            self.games_instances[model.Custom].register_lambdas()
+            self.games_instances[model.Custom].register_lambdas()  # type: ignore[attr-defined]  # noqa
 
     def open_github(self) -> None:
         try:
