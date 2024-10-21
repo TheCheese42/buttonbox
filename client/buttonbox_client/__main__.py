@@ -26,7 +26,7 @@ class Connection:
         log: Callable[[str, str], None],
         log_mc: Callable[[str], None],
     ) -> None:
-        self.port = port
+        self.port = "/dev/pts/5"#port
         self.baudrate = baudrate
         self.log = log
         self.log_mc = log_mc
@@ -142,7 +142,13 @@ class Connection:
                     self.in_history.append(line)
                     # Double space for alignment with [OUT]
                     self.full_history.append(f"[IN]  {line}")
-                    self.process_task(line)
+                    try:
+                        self.process_task(line)
+                    except Exception as e:
+                        self.log(
+                            f"Received invalid task {line.strip("\n")} ({e})",
+                            "ERROR"
+                        )
                 else:
                     break
             time.sleep(0.01)
@@ -153,12 +159,22 @@ class Connection:
 
     def process_task(self, line: str) -> None:
         task = line.split()
+        if not task:
+            return
         if task[0] == "EVENT":
             if task[1] == "ROTARYENCODER":
                 if task[2] == "CLOCKWISE":
-                    self.rotary_encoder_clockwise()
+                    try:
+                        self.rotary_encoder_clockwise()
+                    except Exception as e:
+                        config.log(str(e), "CRITICAL")
+                        traceback.print_exc(file=config.LogStream("TRACE"))
                 elif task[2] == "COUNTERCLOCKWISE":
-                    self.rotary_encoder_counterclockwise()
+                    try:
+                        self.rotary_encoder_counterclockwise()
+                    except Exception as e:
+                        config.log(str(e), "CRITICAL")
+                        traceback.print_exc(file=config.LogStream("TRACE"))
         elif task[0] == "STATUS":
             if task[1] == "BUTTON":
                 if task[2] == "MATRIX":
@@ -168,10 +184,18 @@ class Connection:
                         if "\n" in row or not row:
                             continue
                         matrix.append([int(i) for i in row.split(":")])
-                    self.status_button_matrix(matrix)
+                    try:
+                        self.status_button_matrix(matrix)
+                    except Exception as e:
+                        config.log(str(e), "CRITICAL")
+                        traceback.print_exc(file=config.LogStream("TRACE"))
                 elif task[2] == "SINGLE":
                     state = task[3]
-                    self.status_button_single(int(state))
+                    try:
+                        self.status_button_single(int(state))
+                    except Exception as e:
+                        config.log(str(e), "CRITICAL")
+                        traceback.print_exc(file=config.LogStream("TRACE"))
         elif task[0] == "DEBUG":
             self.mc_debug(" ".join(task[1:]))
             config.log_mc(line)
@@ -185,7 +209,7 @@ class Connection:
             self.mc_critical(" ".join(task[1:]))
             config.log_mc(line)
         else:
-            self.log(f"Received invalid task {line}", "WARNING")
+            self.log(f"Received invalid task {line.strip("\n")}", "ERROR")
 
     def connect(self) -> bool:
         try:

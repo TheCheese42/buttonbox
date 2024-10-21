@@ -1,16 +1,19 @@
 import platform
+import string
 import sys
 import webbrowser
 from copy import deepcopy
+from itertools import zip_longest
 from subprocess import getoutput
 from typing import TYPE_CHECKING, Any, Optional
 
 from pynput.keyboard import Key
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QCloseEvent, QKeySequence
 from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QFormLayout,
-                             QKeySequenceEdit, QLabel, QLineEdit, QMainWindow,
-                             QMessageBox, QWidget)
+                             QKeySequenceEdit, QLabel, QLineEdit,
+                             QListWidgetItem, QMainWindow, QMessageBox,
+                             QWidget)
 from serial import SerialException
 from serial.tools.list_ports import comports
 
@@ -74,9 +77,14 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.games_instances = {}
         for game in model.GAME_LOOKUP.values():
             if game == model.TestGame:
-                self.games_instances[game] = game(self.conn, self)  # type: ignore[call-arg]  # noqa
+                self.games_instances[game] = game(self.conn, self)
             else:
-                self.games_instances[game] = game(self.conn)
+                self.games_instances[game] = game(self.conn, self.controller)
+        for action, name in config.get_custom_actions().items():
+            model.Custom.add_action(action, name)
+        model.register_custom_shortcut_actions()
+        model.populate_game_actions()
+        self.games_instances[model.Custom].register_lambdas()
         self.conn.rotary_encoder_clockwise = self._rot_clockwise
         self.conn.rotary_encoder_counterclockwise = self._rot_counterclockwise
         self.conn.status_button_matrix = self._button_matrix
@@ -486,12 +494,38 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 action = entry[1]
                 edit = entry[2]
                 shortcut = edit.keySequence().toString()
+                try:
+                    shortcut.encode("utf-8")
+                except UnicodeEncodeError:
+                    config.log("Invalid shortcut configured", "ERROR")
+                    show_error(
+                        self, "Invalid Character",
+                        "You entered an invalid character in the shortcuts "
+                        "menu. This commonly happens when using alternate "
+                        "graphics (AltGr). Please do not use these characters."
+                    )
+                    continue
                 config.set_keyboard_shortcut(game, action, shortcut)
 
     def manage_custom_actions(self) -> None:
-        dialog = CustomActionManager(self)
+        dialog = CustomActionsManager(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            pass  # TODO
+            list_items = [dialog.actionsList.item(i).text()
+                          for i in range(dialog.actionsList.count())]
+            for id, new_name in zip_longest(
+                dialog.custom_actions.keys(), list_items
+            ):
+                if id is not None:
+                    dialog.custom_actions[id] = new_name
+                else:
+                    dialog.custom_actions[
+                        dialog.name_to_unique(new_name)
+                    ] = new_name
+            model.CUSTOM_ACTIONS = dialog.custom_actions
+            config.set_custom_actions(model.CUSTOM_ACTIONS)
+            model.register_custom_shortcut_actions()
+            model.populate_game_actions()
+            self.games_instances[model.Custom].register_lambdas()
 
     def open_github(self) -> None:
         try:
@@ -653,13 +687,16 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
         combo: QComboBox,
         selected: Optional[model.GAME_ACTION_ENTRY] = None,
     ) -> None:
+        prev_text = combo.currentText()
         combo.clear()
+        new_current = 0
         for i, action in enumerate(model.GAME_ACTIONS):
             action_class = model.find_class(action)
-            combo.addItem(
+            text = (
                 f"{action_class.game_name}: "  # type: ignore[union-attr]
                 f"{action_class.name_for_action(action)}"  # type: ignore[union-attr]  # noqa
             )
+            combo.addItem(text)
             if (
                 (
                     selected and
@@ -667,10 +704,10 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
                         model.GAME_LOOKUP, model.find_class(action)
                     ) == selected["game"]
                     and action.__name__ == selected["action"]
-                )
-                or i == 0
+                ) or text == prev_text
             ):
-                combo.setCurrentIndex(i)
+                new_current = i
+        combo.setCurrentIndex(new_current)
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
@@ -807,6 +844,10 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
                 )["value"]
             )
         else:
+            # So we don't accidentally clear our combos using matrix_changed
+            self.matrixTypeCombo.blockSignals(True)
+            self.matrixCombo.blockSignals(True)
+            self.matrixEdit.blockSignals(True)
             self.matrixTypeCombo.setCurrentText("Game Action")
             self._populate_combo(
                 self.matrixCombo,
@@ -814,6 +855,9 @@ class ProfileEditor(QDialog, Ui_ProfileEditor):  # type: ignore[misc]
                     *self.selected_matrix_point
                 )["value"],
             )
+            self.matrixTypeCombo.blockSignals(False)
+            self.matrixCombo.blockSignals(False)
+            self.matrixEdit.blockSignals(False)
         self._set_type_input_pair(
             self.matrixTypeCombo,
             self.matrixEdit,
@@ -967,13 +1011,59 @@ class KeyboardShortcuts(QDialog, Ui_KeyboardShortcuts):  # type: ignore[misc]
             lo.addLayout(form)
 
 
-class CustomActionManager(QDialog, Ui_CustomActionsManager):  # type: ignore[misc]  # noqa
+class CustomActionsManager(QDialog, Ui_CustomActionsManager):  # type: ignore[misc]  # noqa
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
+        self.custom_actions = model.CUSTOM_ACTIONS.copy()
         self.setupUi(self)
+        self.connectSignalsSlots()
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
+        self.actionsList.clear()
+        for name in self.custom_actions.values():
+            item = QListWidgetItem(name)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+            self.actionsList.addItem(item)
+
+    def connectSignalsSlots(self) -> None:
+        self.addButton.clicked.connect(self.add)
+        self.removeButton.clicked.connect(self.remove)
+
+    def add(self) -> None:
+        item = QListWidgetItem("New Action")
+        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        self.actionsList.addItem(item)
+
+    def remove(self) -> None:
+        try:
+            item = self.actionsList.selectedItems()[0]
+        except IndexError:
+            return
+        name = item.text()
+        self.actionsList.takeItem(self.actionsList.indexFromItem(item).row())
+        try:
+            unique = model.reverse_lookup(self.custom_actions, name)
+        except KeyError:
+            return
+        del self.custom_actions[unique]
+
+    def name_to_unique(self, name: str) -> str:
+        unique = "_" + name.lower().strip().replace(" ", "_")
+        for char in unique:
+            if char in unique:
+                if char not in string.ascii_letters + string.digits + "_":
+                    unique = unique.replace(char, "")
+
+        if unique in self.custom_actions:
+            n = 1
+            while True:
+                if unique + f"_{n}" in self.custom_actions:
+                    n += 1
+                else:
+                    break
+            unique += f"_{n}"
+        return unique
 
 
 def launch_gui(conn: "Connection") -> tuple[QApplication, Window]:

@@ -64,6 +64,11 @@ def exec_entry(
     state: bool,
     games_to_instance: dict[type["Game"], "Game"],
 ) -> None:
+    config.log(
+        f"Executing action of type '{entry['type']}' and value "
+        f"'{entry['value']}' (state = {state})",
+        "DEBUG"
+    )
     if entry["type"] is None:
         return
     elif entry["type"] == "command":
@@ -211,27 +216,35 @@ class Controller:
 
     def press(
         self,
-        key: Optional[Key] = None,
+        key: Optional[Union[Key, KeyCode]] = None,
         but: Optional[Button] = None,
     ) -> None:
         if key:
             self.kc.press(key)
+            config.log(
+                f"Pressed key {key.char if isinstance(key, KeyCode) else key}"
+            )
         if but:
             self.mc.press(but)
+            config.log(f"Pressed button {but.name}")
 
     def release(
         self,
-        key: Optional[Key] = None,
+        key: Optional[Union[Key, KeyCode]] = None,
         but: Optional[Button] = None,
     ) -> None:
         if key:
             self.kc.release(key)
+            config.log(
+                f"Released key {key.char if isinstance(key, KeyCode) else key}"
+            )
         if but:
             self.mc.release(but)
+            config.log(f"Released button {but.name}")
 
     def tap(
         self,
-        key: Optional[Key] = None,
+        key: Optional[Union[Key, KeyCode]] = None,
         but: Optional[Button] = None,
         delay: Optional[float] = None,
     ) -> None:
@@ -325,8 +338,9 @@ class Game:
     priority = 1
     hidden = False
 
-    def __init__(self, conn: "Connection") -> None:
+    def __init__(self, conn: "Connection", controller: Controller) -> None:
         self.conn = conn
+        self.controller = controller
 
     @staticmethod
     def actions() -> list[Callable[[Any, bool], None]]:
@@ -361,13 +375,99 @@ class Game:
     def _led_extra(self, state: bool) -> None:
         self.conn.write(f"LED {STATE[state]} EXTRA")
 
+    @staticmethod
+    def _parse_shortcut(
+        shortcut: str
+    ) -> list[tuple[list[Key], Optional[KeyCode]]]:
+        """Parses Qt KeySequences into pynput keys."""
+        key_lookup = {
+            "Alt": Key.alt,
+            "Backspace": Key.backspace,
+            "CapsLock": Key.caps_lock,
+            "Ctrl": Key.ctrl,
+            "Del": Key.delete,
+            "Down": Key.down,
+            "End": Key.end,
+            "Return": Key.enter,
+            "Esc": Key.esc,
+            "F1": Key.f1,
+            "F2": Key.f2,
+            "F3": Key.f3,
+            "F4": Key.f4,
+            "F5": Key.f5,
+            "F6": Key.f6,
+            "F7": Key.f7,
+            "F8": Key.f8,
+            "F9": Key.f9,
+            "F10": Key.f10,
+            "F11": Key.f11,
+            "F12": Key.f12,
+            "F13": Key.f13,
+            "F14": Key.f14,
+            "F15": Key.f15,
+            "F16": Key.f16,
+            "F17": Key.f17,
+            "F18": Key.f18,
+            "F19": Key.f19,
+            "F20": Key.f20,
+            "Home Page": Key.home,
+            "Ins": Key.insert,
+            "Left": Key.left,
+            "NumLock": Key.num_lock,
+            "PgDown": Key.page_down,
+            "PgUp": Key.page_up,
+            "Print": Key.print_screen,
+            "Right": Key.right,
+            "ScrollLock": Key.scroll_lock,
+            "Shift": Key.shift,
+            "Space": Key.space,
+            "Tab": Key.tab,
+            "Up": Key.up,
+        }
+        cuts: list[tuple[list[Key], Optional[KeyCode]]] = []
+        combos = map(str.strip, shortcut.split(","))
+        for combo in combos:
+            key: Optional[str]
+            *mods, key = combo.split("+")
+            if key in key_lookup:
+                mods.append(key)
+                key = None
+            trans_mods: list[Key] = []
+            for mod in mods:
+                if (result := key_lookup.get(mod)):
+                    trans_mods.append(result)
+            if key is None:
+                key_code = None
+            else:
+                try:
+                    key_code = KeyCode.from_char(key)
+                except Exception as e:
+                    config.log(
+                        f"Tried to parse invalid key: {key} ({e})", "WARNING"
+                    )
+            cuts.append((trans_mods, key_code))
+        return cuts
+
+    def _issue_shortcut(self, state: bool, shortcut: str) -> None:
+        shortcuts = self._parse_shortcut(shortcut)
+        for combo in shortcuts:
+            mods, key_code = combo
+            all_keys: list[Union[Key, Optional[KeyCode]]] = [*mods, key_code]
+            for key in all_keys:
+                if key is None:
+                    continue
+                if state:
+                    self.controller.press(key)
+                else:
+                    self.controller.release(key)
+
 
 class Default(Game):
     game_name = "Default"
     priority = 0
 
-    def __init__(self, conn: "Connection") -> None:
-        super().__init__(conn)
+    def __init__(self, conn: "Connection", controller: Controller) -> None:
+        super().__init__(conn, controller)
         self.led_man_cooldown = 1.0
         self.led_man_last = 0.0
 
@@ -389,7 +489,7 @@ class TestGame(Game):
     hidden = True
 
     def __init__(self, conn: "Connection", win: "Window") -> None:
-        super().__init__(conn)
+        super().__init__(conn, None)  # type: ignore[arg-type]
         self.win = win
 
         # Allow calling the lambdas using getattr()
@@ -449,30 +549,65 @@ class TestGame(Game):
         self._led_right(self.win.td3.isChecked())
 
 
+CUSTOM_ACTIONS: dict[str, str] = {}
+
+
+def register_custom_shortcut_actions() -> None:
+    for action in Custom.actions():
+        SHORTCUT_ACTIONS.append(action)
+
+
 class Custom(Game):
     game_name = "Custom"
 
-    def __init__(self, conn: "Connection") -> None:
-        super().__init__(conn)
-        self._actions: list[Callable[[Any, bool], None]] = []
+    def __init__(self, conn: "Connection", controller: Controller) -> None:
+        super().__init__(conn, controller)
+        self.register_lambdas()
+
+    def register_lambdas(self) -> None:
+        for lamb in self.actions():
+            part = partial(lamb, self)
+            part.__name__ = lamb.__name__  # type: ignore[attr-defined]
+            setattr(self, lamb.__name__, part)
 
     @staticmethod
-    def action() -> list[Callable[[Any, bool], None]]:
-        return []  # TODO
+    def actions() -> list[Callable[[Any, bool], None]]:
+        def create_lambda(
+            name: str, shortcut: str
+        ) -> Callable[[Any, bool], None]:
+            # Need to create a lambda using an inner function to prevent
+            # modifying the name in the outer scope. This would make all
+            # lambdas have the last name as name, instead of their respective
+            # names.
+            lamb = lambda self, state: self._issue_shortcut(state, shortcut)  # noqa
+            lamb.__name__ = name
+            return lamb
+
+        acts: list[Callable[[Any, bool], None]] = []
+        for name in CUSTOM_ACTIONS:
+            shortcut = config.get_keyboard_shortcut("custom", name)
+            if not shortcut:
+                lamb = lambda self, state: None  # noqa
+                lamb.__name__ = name
+            else:
+                lamb = create_lambda(name, shortcut)
+            acts.append(lamb)
+        return acts
 
     @staticmethod
     def name_for_action(action: Callable[[Any, bool], None]) -> Optional[str]:
-        lookup: dict[Callable[[Any, bool], None], str] = {}  # TODO
-        return lookup.get(action)
+        return CUSTOM_ACTIONS[action.__name__]
 
-    def add_action(self, action: Callable[[Any, bool], None]) -> None:
-        self._actions.append(action)
+    @staticmethod
+    def add_action(action: str, name: str) -> None:
+        CUSTOM_ACTIONS[action] = name
 
-    def remove_action(self, action: Callable[[Any, bool], None]) -> None:
-        self._actions.remove(action)
-
-    def get_actions(self) -> list[Callable[[Any, bool], None]]:
-        return self._actions
+    @staticmethod
+    def remove_action(action: str) -> None:
+        try:
+            del CUSTOM_ACTIONS[action]
+        except ValueError:
+            pass
 
 
 class BeamNG(Game):
@@ -505,11 +640,19 @@ GAME_LOOKUP: dict[str, type[Game]] = {
 }
 
 
-GAME_ACTIONS: list[Callable[[Any, bool], None]] = list(
-    chain(
-        *[game.actions() for game in GAME_LOOKUP.values() if not game.hidden]
+def populate_game_actions() -> None:
+    global GAME_ACTIONS
+    GAME_ACTIONS = list(
+        chain(
+            *[game.actions()
+              for game in GAME_LOOKUP.values()
+              if not game.hidden]
+        )
     )
-)
+
+
+GAME_ACTIONS: list[Callable[[Any, bool], None]] = []
+populate_game_actions()
 
 
 def load_profiles() -> dict[int, Profile]:

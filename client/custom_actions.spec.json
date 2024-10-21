@@ -1,5 +1,5 @@
-[
-    "action1",
-    "action2",
-    "actionN"
-]
+{
+    "action1": "Action 1",
+    "action2": "Action 2",
+    "actionN:": "Action N"
+}

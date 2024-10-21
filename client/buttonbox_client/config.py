@@ -59,7 +59,7 @@ def ensure_keyboard_file() -> None:
 def ensure_custom_actions_file() -> None:
     if not CUSTOM_ACTIONS_PATH.exists():
         with open(CUSTOM_ACTIONS_PATH, "w", encoding="utf-8") as fp:
-            fp.write("[]")
+            fp.write("{}")
 
 
 def init_config() -> None:
@@ -126,13 +126,13 @@ def set_keyboard_shortcut(game: str, action: str, shortcut: str) -> None:
         json.dump(shortcuts, fp)
 
 
-def get_custom_actions() -> list[str]:
+def get_custom_actions() -> dict[str, str]:
     with open(CUSTOM_ACTIONS_PATH, "r", encoding="utf-8") as fp:
-        actions: list[str] = json.load(fp)
+        actions: dict[str, str] = json.load(fp)
     return actions
 
 
-def set_custom_actions(actions: list[str]) -> None:
+def set_custom_actions(actions: dict[str, str]) -> None:
     with open(CUSTOM_ACTIONS_PATH, "w", encoding="utf-8") as fp:
         json.dump(actions, fp)
 
