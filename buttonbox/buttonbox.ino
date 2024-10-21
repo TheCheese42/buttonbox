@@ -4,8 +4,8 @@
 
 using namespace std;
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
+#define SCREEN_WIDTH 128  // ADAPT
+#define SCREEN_HEIGHT 64  // ADAPT
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
