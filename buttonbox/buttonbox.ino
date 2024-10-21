@@ -14,7 +14,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 const int BUTTON_MATRIX_VOLTAGES[] = {4095, 2000, 1000};  // ADAPT
 
 // ± Range of voltages
-const int BUTTON_VOLTAGE_RANGE = 50;
+const int BUTTON_VOLTAGE_RANGE = 50;  // ADAPT
 
 // From top to bottom as the buttons are placed, *not* as the pins are placed
 const int BUTTON_MATRIX_PINS[] = {26, 25, 33, 32, 35, 34};  // ADAPT
