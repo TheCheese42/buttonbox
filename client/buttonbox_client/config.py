@@ -19,6 +19,11 @@ PROFILES_PATH = CONFIG_DIR / "profiles.json"
 KEYBOARD_SHORTCUTS_PATH = CONFIG_DIR / "keyboard_shortcuts.json"
 CUSTOM_ACTIONS_PATH = CONFIG_DIR / "custom_actions.json"
 
+LICENSES_PATH = Path(__file__).parent / "licenses"
+LICENSE_PATH = LICENSES_PATH / "LICENSE.html"
+WINDOWS_LICENSE_PATH = LICENSES_PATH / "OPEN_SOURCE_LICENSES_WINDOWS.html"
+LINUX_LICENSE_PATH = LICENSES_PATH / "OPEN_SOURCE_LICENSES_LINUX.html"
+
 DEFAULT_CONFIG = {
     "dark": False,
     "default_port": "COM0" if platform.system() == "Windows" else "/dev/ttyS0",
