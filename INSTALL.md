@@ -32,8 +32,13 @@ When bundling an Executable, the following files and directories must be include
 - `/client/buttonbox_client/model.py`
 - `/client/buttonbox_client/version.py`
 - `/client/buttonbox_client/empty_profile.json`
+- `/client/buttonbox_client/licenses/LICENSES.html` (See below)
 - `PyQt6`, `pystray`, `pillow`, `pyserial` and `pynput` top level dependencies
 
 The main file is `/client/buttonbox_client/__main__.py`.
+
+For the Open Source Licenses Dialog to function properly, the appropriate License file from `/client/buttonbox_client/licenses/` must be copied to `/client/buttonbox_client/licenses/LICENSES.html`.
+
+The License Files can be found [here](https://pastebin.com/u/TheCheese42/1/CT6nGxMK).
 
 A nuitka build script will be included in the future.

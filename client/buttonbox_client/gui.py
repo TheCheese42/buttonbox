@@ -4,6 +4,7 @@ import sys
 import webbrowser
 from copy import deepcopy
 from itertools import zip_longest
+from pathlib import Path
 from subprocess import getoutput
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -584,6 +585,27 @@ class LicensesDialog(QDialog, Ui_Licenses):  # type: ignore[misc]
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
+        self.textBrowser.clear()
+        license_path = config.LICENSE_PATH
+        if license_path.exists():
+            text = license_path.read_text("utf-8")
+        else:
+            system = platform.system()
+            path: Optional[Path] = None
+            if system == "Windows":
+                path = config.WINDOWS_LICENSE_PATH
+            elif system == "Linux":
+                path = config.LINUX_LICENSE_PATH
+            if path and path.exists():
+                text = path.read_text("utf-8")
+            else:
+                text = "Couldn't find Licenses File for your Platform. " \
+                       "Please contact the publisher about it or browse " \
+                       "The available Files on GitHub: " \
+                       "https://github.com/asunadawg/buttonbox/tree/main/" \
+                       "client/buttonbox_client/licenses"
+        self.textBrowser.clear()
+        self.textBrowser.setText(text)
 
 
 class AboutDialog(QDialog, Ui_About):  # type: ignore[misc]
