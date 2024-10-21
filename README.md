@@ -64,6 +64,7 @@ To configure the Box' behavior, Profiles can be created. Profiles can control th
 Note that Automatic Detection and LED Management is currently only possible using pre-made functions.
 
 ![image](./screenshots/client_profiles.png)
+
 _Profiles Dialog opened using `Edit` > `Profiles...`_
 
 #### Configuring Profiles
