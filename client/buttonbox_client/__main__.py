@@ -66,11 +66,11 @@ class Connection:
             elif not self.handshaked:
                 try:
                     self.ser.read_all()
-                except serial.SerialException:
+                except (OSError, serial.SerialException, TypeError):
                     pass
                 try:
                     self.ser.write(b"HANDSHAKE\n")
-                except serial.SerialException as e:
+                except (OSError, serial.SerialException, TypeError) as e:
                     self.log(f"Error writing handshake: {e}", "WARNING")
                     continue
                 for _ in range(100):
@@ -86,7 +86,9 @@ class Connection:
                     if in_waiting > 0:
                         try:
                             msg = self.ser.read_until().decode("utf-8")
-                        except serial.SerialException as e:
+                        except (
+                            OSError, serial.SerialException, TypeError
+                        ) as e:
                             self.log(f"Error reading potential handshake: {e}",
                                      "WARNING")
                             continue
@@ -111,7 +113,7 @@ class Connection:
                     cmd = self.write_queue.popleft()
                     try:
                         self.ser.write(cmd.encode("utf-8") + b"\n")
-                    except serial.SerialException as e:
+                    except (OSError, serial.SerialException, TypeError) as e:
                         self.log(f"Error writing '{cmd}': {e}", "WARNING")
                         self.write_queue.append(cmd)
                         continue
@@ -133,7 +135,7 @@ class Connection:
                 if in_waiting > 0:
                     try:
                         line = self.ser.read_until().decode("utf-8")
-                    except (serial.SerialException, TypeError) as e:
+                    except (OSError, serial.SerialException, TypeError) as e:
                         self.log(f"Error reading waiting bytes: {e}",
                                  "WARNING")
                         continue
