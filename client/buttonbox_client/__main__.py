@@ -133,7 +133,7 @@ class Connection:
                 if in_waiting > 0:
                     try:
                         line = self.ser.read_until().decode("utf-8")
-                    except serial.SerialException as e:
+                    except (serial.SerialException, TypeError) as e:
                         self.log(f"Error reading waiting bytes: {e}",
                                  "WARNING")
                         continue
