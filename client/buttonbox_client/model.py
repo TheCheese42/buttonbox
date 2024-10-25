@@ -476,11 +476,12 @@ class Default(Game):
 
     def led_manager(self) -> None:
         if time.time() - self.led_man_cooldown >= self.led_man_last:
+            config.log("LED_MANAGER Default lighting up", "DEBUG")
             self._led_left(True)
             self._led_middle(True)
             self._led_right(True)
             self._led_extra(True)
-        self.led_man_last = time.time()
+            self.led_man_last = time.time()
 
 
 class TestGame(Game):
@@ -543,6 +544,11 @@ class TestGame(Game):
         return lookup.get(action)
 
     def led_manager(self) -> None:
+        states = (self.win.td0.isChecked(), self.win.td1.isChecked(),
+                  self.win.td2.isChecked(), self.win.td3.isChecked(),)
+        config.log(
+            f"LED_MANAGER TestGame updating ({':'.join(states)})", "DEBUG"
+        )
         self._led_extra(self.win.td0.isChecked())
         self._led_left(self.win.td1.isChecked())
         self._led_middle(self.win.td2.isChecked())
