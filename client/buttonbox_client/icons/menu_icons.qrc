@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file>edit-3.png</file>
+    <file>aperture.png</file>
     <file>zap.png</file>
     <file>mouse-pointer.png</file>
     <file>command.png</file>

@@ -6,10 +6,10 @@ from copy import deepcopy
 from itertools import zip_longest
 from pathlib import Path
 from subprocess import getoutput
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 from pynput.keyboard import Key
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QModelIndex, Qt, QTimer
 from PyQt6.QtGui import QCloseEvent, QKeySequence
 from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QFormLayout,
                              QKeySequenceEdit, QLabel, QLineEdit,
@@ -23,8 +23,10 @@ try:
     from .icons import resource as _  # noqa
     from .ui.about_ui import Ui_About
     from .ui.custom_actions_ui import Ui_CustomActionsManager
+    from .ui.edit_macro_action_ui import Ui_EditAction
     from .ui.keyboard_ui import Ui_KeyboardShortcuts
     from .ui.licenses_ui import Ui_Licenses
+    from .ui.macro_editor_ui import Ui_MacroEditor
     from .ui.profile_editor_ui import Ui_ProfileEditor
     from .ui.profiles_ui import Ui_Profiles
     from .ui.serial_monitor_ui import Ui_SerialMonitor
@@ -35,8 +37,10 @@ except ImportError:
     from icons import resource as _  # noqa
     from ui.about_ui import Ui_About
     from ui.custom_actions_ui import Ui_CustomActionsManager
+    from ui.edit_macro_action_ui import Ui_EditAction
     from ui.keyboard_ui import Ui_KeyboardShortcuts
     from ui.licenses_ui import Ui_Licenses
+    from ui.macro_editor_ui import Ui_MacroEditor
     from ui.profile_editor_ui import Ui_ProfileEditor
     from ui.profiles_ui import Ui_Profiles
     from ui.serial_monitor_ui import Ui_SerialMonitor
@@ -71,6 +75,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.conn = conn
         self.controller = model.start_controller()
         self.main_widget_detected = False
+        self.macros = config.get_macros()
         self.profiles = model.sort_dict(model.load_profiles())
         self.current_profile: Optional[model.Profile] = None
         self.test_mode = False
@@ -404,6 +409,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.actionManage_Custom_Actions.triggered.connect(
             self.manage_custom_actions
         )
+        self.actionManage_Macros.triggered.connect(self.macro_editor)
         self.actionProfiles.triggered.connect(self.open_profiles)
         self.actionSerial_Monitor.triggered.connect(self.serial_monitor)
         self.actionLog.triggered.connect(self.open_log)
@@ -507,6 +513,12 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                     )
                     continue
                 config.set_keyboard_shortcut(game, action, shortcut)
+
+    def macro_editor(self) -> None:
+        dialog = MacroEditor(self, deepcopy(self.macros))
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.macros = dialog.macros
+            config.set_macros(self.macros)
 
     def manage_custom_actions(self) -> None:
         dialog = CustomActionsManager(self)
@@ -1086,6 +1098,321 @@ class CustomActionsManager(QDialog, Ui_CustomActionsManager):  # type: ignore[mi
                     break
             unique += f"_{n}"
         return unique
+
+
+class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
+    def __init__(self, parent: QWidget, macros: list[config.MACRO]) -> None:
+        super().__init__(parent)
+        self.macros = macros
+        self.items_macros: list[tuple[QListWidgetItem, config.MACRO]] = []
+        self.items_actions: list[
+            tuple[QListWidgetItem, config.MACRO_ACTION]
+        ] = []
+        self.cur_macro: Optional[config.MACRO] = None
+        self.setupUi(self)
+        self.connectSignalsSlots()
+
+    def setupUi(self, *args: Any, **kwargs: Any) -> None:
+        super().setupUi(*args, **kwargs)
+        self.updateUi()
+
+    def updateUi(self) -> None:
+        self.macroList.clear()
+        for macro in self.macros:
+            item = QListWidgetItem(macro["name"])
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+            self.items_macros.append((item, macro))
+            self.macroList.addItem(item)
+        self.actionList.clear()
+
+    def connectSignalsSlots(self) -> None:
+        self.macroList.itemSelectionChanged.connect(self.macro_list_selection)
+        self.macroList.itemChanged.connect(self.rename_macro)
+        self.newMacroBtn.pressed.connect(self.new_macro)
+        self.delMacroBtn.pressed.connect(self.del_macro)
+        self.changeBtn.pressed.connect(self.change_action)
+        self.deleteBtn.pressed.connect(self.delete_action)
+        self.modeUntilReleasedRadio.pressed.connect(self.mode_until_released)
+        self.modeUntilPressedRadio.pressed.connect(self.mode_until_pressed)
+        self.modeNTimesRadio.pressed.connect(self.mode_n_times)
+        self.modeNTimesSpin.valueChanged.connect(self.update_n_times)
+        self.insertActionCombo.currentTextChanged.connect(self.insert_action)
+
+    def insert_action(self) -> None:
+        try:
+            sel_index: Optional[
+                QModelIndex
+            ] = self.actionList.selectedIndexes()[0]
+        except IndexError:
+            sel_index = None
+
+        what = self.insertActionCombo.currentIndex()
+        if what == 0:  # Default
+            return
+        if what == 1:  # Press Key
+            type = "press_key"
+            value = ""
+        elif what == 2:  # Release Key
+            type = "release_key"
+            value = ""
+        elif what == 3:  # Delay
+            type = "delay"
+            value = 50
+        elif what == 4:  # Left Mouse Button
+            type = "left_mouse_button"
+            value = None
+        elif what == 5:  # Middle Mouse Button
+            type = "middle_mouse_button"
+            value = None
+        else:  # Right Mouse Button
+            type = "right_mouse_button"
+            value = None
+        action = {
+            "type": type,
+            "value": value,
+        }
+        item = QListWidgetItem(self._action_to_str(action))
+        if sel_index:
+            idx = sel_index.row()
+            self.items_actions.insert(idx, (item, action))
+            self.actionList.insertItem(idx, item)
+        else:
+            self.items_actions.append((item, action))
+            self.actionList.addItem(item)
+        self.insertActionCombo.setCurrentIndex(0)
+
+    def update_n_times(self) -> None:
+        self.modeNTimesRadio.setChecked(True)
+        self.modeUntilReleasedRadio.setChecked(False)
+        self.modeUntilPressedRadio.setChecked(False)
+        self.mode_n_times()
+
+    def mode_n_times(self) -> None:
+        if self.cur_macro is None:
+            show_error(
+                self, "Invalid Action",
+                "No Macro is selected, please report this.",
+            )
+            config.log("No current Macro found when deleting action", "ERROR")
+            return
+        self.cur_macro["mode"] = self.modeNTimesSpin.value()
+
+    def mode_until_pressed(self) -> None:
+        if self.cur_macro is None:
+            show_error(
+                self, "Invalid Action",
+                "No Macro is selected, please report this.",
+            )
+            config.log("No current Macro found when deleting action", "ERROR")
+            return
+        self.cur_macro["mode"] = "until_pressed_again"
+
+    def mode_until_released(self) -> None:
+        if self.cur_macro is None:
+            show_error(
+                self, "Invalid Action",
+                "No Macro is selected, please report this.",
+            )
+            config.log("No current Macro found when deleting action", "ERROR")
+            return
+        self.cur_macro["mode"] = "until_released"
+
+    def delete_action(self) -> None:
+        try:
+            selected = self.actionList.selectedItems()[0]
+        except IndexError:
+            return
+        if self.cur_macro is None:
+            show_error(
+                self, "Invalid Action",
+                "No Macro is selected, please report this.",
+            )
+            config.log("No current Macro found when deleting action", "ERROR")
+            return
+        for i, (item, action) in enumerate(self.items_actions):
+            if item == selected:
+                for j, macro_action in enumerate(self.cur_macro["actions"]):
+                    if action is macro_action:
+                        del self.cur_macro["actions"][j]
+                del self.items_actions[i]
+                break
+        self.actionList.removeItemWidget(selected)
+
+    def change_action(self) -> None:
+        try:
+            selected = self.actionList.selectedItems()[0]
+        except IndexError:
+            return
+        cur_action: Optional[config.MACRO_ACTION] = None
+        for item, action in self.items_actions:
+            if item == selected:
+                cur_action = action
+        if cur_action is None:
+            return
+
+        if cur_action["type"] == "delay":
+            mode = "delay"
+        elif cur_action["type"] in ("press_key", "release_key"):
+            mode = "key"
+        else:
+            return
+        dialog = MacroActionEditor(self, mode, cur_action["value"])
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            if mode == "delay":
+                cur_action["value"] = dialog.delaySpin.value()
+            else:
+                cur_action["value"] = dialog.keySequence.keySequence(
+                ).toString()
+            self._refresh_action_list_names()
+
+    def _refresh_action_list_names(self) -> None:
+        for item, action in self.items_actions:
+            item.setText(self._action_to_str(action))
+
+    def del_macro(self) -> None:
+        try:
+            selected = self.macroList.selectedItems()[0]
+        except IndexError:
+            return
+        for i, (item, cur_macro) in enumerate(self.items_macros):
+            if item == selected:
+                for j, macro in enumerate(self.macros):
+                    if cur_macro is macro:
+                        del self.macros[j]
+                del self.items_macros[i]
+                break
+        self.macroList.removeItemWidget(selected)
+        self.cur_macro = None
+        self.updateUi()
+        self._set_enabled_actions(False)
+
+    def new_macro(self) -> None:
+        macro = {
+            "name": "New Macro",
+            "mode": 1,
+            "actions": [],
+        }
+        self.macros.append(macro)
+        item = QListWidgetItem(macro["name"])
+        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+        self.macroList.addItem(item)
+        self.items_macros.append((item, macro))
+
+    def _set_enabled_actions(self, enabled: bool = True) -> None:
+        self.actionList.setEnabled(enabled)
+        self.changeBtn.setEnabled(enabled)
+        self.deleteBtn.setEnabled(enabled)
+        self.modeUntilReleasedRadio.setEnabled(enabled)
+        self.modeUntilPressedRadio.setEnabled(enabled)
+        self.modeNTimesRadio.setEnabled(enabled)
+        self.modeNTimesSpin.setEnabled(enabled)
+        self.insertActionCombo.setEnabled(enabled)
+
+    def rename_macro(self, selected: QListWidgetItem) -> None:
+        for item, macro in self.items_macros:
+            if item == selected:
+                macro["name"] = selected.text()
+
+    def macro_list_selection(self) -> None:
+        try:
+            selected = self.macroList.selectedItems()[0]
+        except IndexError:
+            return
+        cur_macro: Optional[config.MACRO] = None
+        for item, macro in self.items_macros:
+            if selected == item:
+                cur_macro = macro
+        if cur_macro is None:
+            return
+        self.cur_macro = cur_macro
+        self._set_enabled_actions(True)
+        self.actionList.clear()
+        self.items_actions.clear()
+        for action in cur_macro["actions"]:
+            item = QListWidgetItem(self._action_to_str(action))
+            self.items_actions.append((item, action))
+            self.actionList.addItem(item)
+        self.modeUntilReleasedRadio.blockSignals(True)
+        self.modeUntilPressedRadio.blockSignals(True)
+        self.modeNTimesRadio.blockSignals(True)
+        self.modeNTimesSpin.blockSignals(True)
+        if cur_macro["mode"] == "until_released":
+            self.modeUntilPressedRadio.setChecked(False)
+            self.modeNTimesRadio.setChecked(False)
+            self.modeNTimesSpin.setValue(0)
+            self.modeUntilReleasedRadio.setChecked(True)
+        elif cur_macro["mode"] == "until_pressed_again":
+            self.modeNTimesRadio.setChecked(False)
+            self.modeNTimesSpin.setValue(0)
+            self.modeUntilReleasedRadio.setChecked(False)
+            self.modeUntilPressedRadio.setChecked(True)
+        elif isinstance(cur_macro["mode"], int):
+            self.modeUntilPressedRadio.setChecked(False)
+            self.modeUntilReleasedRadio.setChecked(True)
+            self.modeNTimesRadio.setChecked(True)
+            self.modeNTimesSpin.setValue(cur_macro["mode"])
+        self.modeUntilReleasedRadio.blockSignals(False)
+        self.modeUntilPressedRadio.blockSignals(False)
+        self.modeNTimesRadio.blockSignals(False)
+        self.modeNTimesSpin.blockSignals(False)
+
+    def _action_to_str(self, action: config.MACRO_ACTION) -> None:
+        name = action["type"].title().replace("_", " ")
+        if action["type"] in ("press_key", "release_key", "delay"):
+            name += f": {action['value']}"
+        return name
+
+
+class MacroActionEditor(QDialog, Ui_EditAction):  # type: ignore[misc]  # noqa
+    def __init__(
+        self,
+        parent: QWidget,
+        type: Union[Literal["delay"], Literal["key"]],
+        preset: Union[str, int],
+    ) -> None:
+        super().__init__(parent)
+        self.type = type
+        self.preset = preset
+        self.setupUi(self)
+
+    def setupUi(self, *args: Any, **kwargs: Any) -> None:
+        super().setupUi(*args, **kwargs)
+        if self.type == "delay":
+            self.delayLabel.setEnabled(True)
+            self.delaySpin.setEnabled(True)
+            self.keyLabel.setMaximumHeight(0)
+            self.keySequence.setMaximumHeight(0)
+            if not isinstance(self.preset, int):
+                show_error(
+                    self, "Invalid Preset",
+                    f"Invalid Preset {self.preset} for mode {self.type}",
+                )
+                config.log(
+                    f"Invalid Preset {self.preset} for mode {self.type}",
+                    "ERROR",
+                )
+                self.reject()
+                return
+            self.delaySpin.setValue(self.preset)
+        else:
+            self.keyLabel.setEnabled(True)
+            self.keySequence.setEnabled(True)
+            self.delayLabel.setMaximumHeight(0)
+            self.delaySpin.setMaximumHeight(0)
+            if not isinstance(self.preset, str):
+                show_error(
+                    self, "Invalid Preset",
+                    f"Invalid Preset {self.preset} for mode {self.type}",
+                )
+                config.log(
+                    f"Invalid Preset {self.preset} for mode {self.type}",
+                    "ERROR",
+                )
+                self.reject()
+                return
+            self.keySequence.setKeySequence(
+                QKeySequence.fromString(self.preset)
+            )
 
 
 def launch_gui(conn: "Connection") -> tuple[QApplication, Window]:

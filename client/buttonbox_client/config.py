@@ -2,7 +2,7 @@ import json
 import platform
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from PyQt6.QtCore import QStandardPaths
 
@@ -18,6 +18,7 @@ SER_HISTORY_PATH = CONFIG_DIR / "serial_history.log"
 PROFILES_PATH = CONFIG_DIR / "profiles.json"
 KEYBOARD_SHORTCUTS_PATH = CONFIG_DIR / "keyboard_shortcuts.json"
 CUSTOM_ACTIONS_PATH = CONFIG_DIR / "custom_actions.json"
+MACROS_PATH = CONFIG_DIR / "macros.json"
 
 LICENSES_PATH = Path(__file__).parent / "licenses"
 LICENSE_PATH = LICENSES_PATH / "LICENSE.html"
@@ -31,6 +32,9 @@ DEFAULT_CONFIG = {
     "auto_detect_profiles": True,
     "hide_to_tray": True,
 }
+
+MACRO_ACTION = dict[str, Optional[Union[str, int]]]
+MACRO = dict[str, Union[str, int, list[MACRO_ACTION]]]
 
 
 def config_exists() -> bool:
@@ -67,12 +71,19 @@ def ensure_custom_actions_file() -> None:
             fp.write("{}")
 
 
+def ensure_macros_file() -> None:
+    if not MACROS_PATH.exists():
+        with open(MACROS_PATH, "w", encoding="utf-8") as fp:
+            fp.write("[]")
+
+
 def init_config() -> None:
     create_app_dir()
     trunc_log()
     ensure_profiles_file()
     ensure_keyboard_file()
     ensure_custom_actions_file()
+    ensure_macros_file()
 
     if not config_exists():
         with open(CONFIG_PATH, "w", encoding="utf-8") as fp:
@@ -140,6 +151,17 @@ def get_custom_actions() -> dict[str, str]:
 def set_custom_actions(actions: dict[str, str]) -> None:
     with open(CUSTOM_ACTIONS_PATH, "w", encoding="utf-8") as fp:
         json.dump(actions, fp)
+
+
+def get_macros() -> list[MACRO]:
+    with open(MACROS_PATH, "r", encoding="utf-8") as fp:
+        text: list[MACRO] = json.load(fp)
+    return text
+
+
+def set_macros(macros: list[MACRO]) -> None:
+    with open(MACROS_PATH, "w", encoding="utf-8") as fp:
+        json.dump(macros, fp)
 
 
 def log(msg: str, level: str = "INFO") -> None:
