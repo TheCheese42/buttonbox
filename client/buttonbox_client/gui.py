@@ -207,6 +207,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             else:
                 self.dial.setValue(self.dial.value() + 1)
         else:
+            config.log("Issuing Volume Up", "DEBUG")
             self.controller.tap(Key.media_volume_up)
 
     def _rot_counterclockwise(self) -> None:
@@ -216,6 +217,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             else:
                 self.dial.setValue(self.dial.value() - 1)
         else:
+            config.log("Issuing Volume Down", "DEBUG")
             self.controller.tap(Key.media_volume_down)
 
     def _button_single(self, state: int) -> None:

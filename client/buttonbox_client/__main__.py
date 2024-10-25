@@ -166,12 +166,19 @@ class Connection:
         if task[0] == "EVENT":
             if task[1] == "ROTARYENCODER":
                 if task[2] == "CLOCKWISE":
+                    self.log(
+                        "Dispatching ROTARYENCODER CLOCKWISE Event", "DEBUG"
+                    )
                     try:
                         self.rotary_encoder_clockwise()
                     except Exception as e:
                         config.log(str(e), "CRITICAL")
                         traceback.print_exc(file=config.LogStream("TRACE"))
                 elif task[2] == "COUNTERCLOCKWISE":
+                    self.log(
+                        "Dispatching ROTARYENCODER COUNTERCLOCKWISE Event",
+                        "DEBUG",
+                    )
                     try:
                         self.rotary_encoder_counterclockwise()
                     except Exception as e:
