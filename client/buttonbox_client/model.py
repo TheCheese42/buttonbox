@@ -480,7 +480,7 @@ class Default(Game):
             self._led_middle(True)
             self._led_right(True)
             self._led_extra(True)
-        self.led_man_last = time.time()
+            self.led_man_last = time.time()
 
 
 class TestGame(Game):
