@@ -18,8 +18,8 @@ And some additional passive components:
 - 18 1N4148 diodes
 - 9 59.1 (ohm) resistors
 - 1 330(tbc) resistor 
-- 470uf 10V capasitor
-- 10uf 25V capasitor 
+- 470uf 10V capacitor
+- 10uf 25V capacitor 
 
 Wokwi project: <https://wokwi.com/projects/410915727655762945> (illustrational).
 
