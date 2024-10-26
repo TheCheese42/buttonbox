@@ -16,10 +16,10 @@ In its current form, there are 6 different components:
 And some additional passive components:
 
 - 18 1N4148 Diodes
-- 9 59.1 (ohm) Resistors
-- 1 330 (tbc) Resistor
-- 470uf 10V Capacitor
-- 10uf 25V Capacitor
+- 9 59.1K Ω Resistors
+- 1 1k Ω Resistor
+- 470µf 10V Capacitor
+- 10µf 25V Capacitor
 
 Wokwi project: <https://wokwi.com/projects/410915727655762945> (illustrational).
 
