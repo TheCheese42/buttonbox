@@ -20,6 +20,7 @@ const int BUTTON_VOLTAGE_RANGE = 500;  // ADAPT Change if presses are not detece
 const int BUTTON_MATRIX_PINS[] = {26, 25, 33, 32, 35, 34};  // ADAPT In order row 1,2,3,4,5,6
 
 const int BUTTON_SINGLE_PIN = 17;  // ADAPT
+//add encoder button later
 
 const int ROTARY_ENCODER_CLK = 14;  // ADAPT
 const int ROTARY_ENCODER_DT = 27;  // ADAPT
