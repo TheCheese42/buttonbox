@@ -1296,8 +1296,19 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
             if mode == "delay":
                 cur_action["value"] = dialog.delaySpin.value()
             else:
-                cur_action["value"] = dialog.keySequence.keySequence(
-                ).toString()
+                shortcut = dialog.keySequence.keySequence().toString()
+                try:
+                    shortcut.encode("utf-8")
+                except UnicodeEncodeError:
+                    config.log("Invalid shortcut configured", "ERROR")
+                    show_error(
+                        self, "Invalid Character",
+                        "You entered an invalid character in the shortcuts "
+                        "menu. This commonly happens when using alternate "
+                        "graphics (AltGr). Please do not use these characters."
+                    )
+                    return
+                cur_action["value"] = shortcut
             self._refresh_action_list_names()
 
     def _refresh_action_list_names(self) -> None:
