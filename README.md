@@ -2,17 +2,24 @@
 
 The idea behind Buttonbox is to have a Microcontroller connected to some Buttons and other hardware that can communicate with a Computer to trigger certain actions, like hitting Keyboard Combinations, changing volume and other generic or specialized tasks.
 
-\<Insert Image of circuit here\>
-<!--![image]()-->
+![image](./screenshots/circuit.png)
 
 In its current form, there are 6 different components:
 
 - An `esp32`
-- 6*3 Button Matrix (using analog Ports)
-- 1 Single Button
-- 4 Diodes
+- 6x3 Button Matrix (using analog Ports)
+- 1 Additional Push Button
+- 4 LEDs
 - 1 Rotary Encoder
 - 1 OLED Display (128x64px)
+
+And some additional passive components:
+
+- 18 1N4148 Diodes
+- 9 59.1 (ohm) Resistors
+- 1 330 (tbc) Resistor
+- 470uf 10V Capacitor
+- 10uf 25V Capacitor
 
 Wokwi project: <https://wokwi.com/projects/410915727655762945> (illustrational).
 
