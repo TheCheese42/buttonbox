@@ -15,11 +15,11 @@ In its current form, there are 6 different components:
 - 1 OLED Display (128x64px)
 
 And some additional passive components:
--18 1N4148 diodes
--xx 59.1 (ohm) resistors
--1 330(tbc) resistor 
--xx xxv capasitor
--xx xxv capasitor 
+- 18 1N4148 diodes
+- 9 59.1 (ohm) resistors
+- 1 330(tbc) resistor 
+- 470uf 10V capasitor
+- 10uf 25V capasitor 
 
 Wokwi project: <https://wokwi.com/projects/410915727655762945> (illustrational).
 
