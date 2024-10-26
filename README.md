@@ -23,6 +23,8 @@ And some additional passive components:
 
 Wokwi project: <https://wokwi.com/projects/410915727655762945> (illustrational).
 
+Technical Schematics: https://i.imgur.com/vJicENz.jpeg.
+
 ## Installing
 
 _See: `INSTALL.md`_
