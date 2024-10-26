@@ -2,8 +2,7 @@
 
 The idea behind Buttonbox is to have a Microcontroller connected to some Buttons and other hardware that can communicate with a Computer to trigger certain actions, like hitting Keyboard Combinations, changing volume and other generic or specialized tasks.
 
-\<Insert Image of circuit here\>
-<!--![image]()-->
+![image](./screenshots/circuit.png)
 
 In its current form, there are 6 different components:
 
