@@ -16,15 +16,27 @@
                 "value": "Ctrl+A"
             },
             {
-                "type": "left_mouse_button",
+                "type": "left_mouse_button_down",
                 "value": null
             },
             {
-                "type": "middle_mouse_button",
+                "type": "middle_mouse_button_down",
                 "value": null
             },
             {
-                "type": "right_mouse_button",
+                "type": "right_mouse_button_down",
+                "value": null
+            },
+            {
+                "type": "left_mouse_button_up",
+                "value": null
+            },
+            {
+                "type": "middle_mouse_button_up",
+                "value": null
+            },
+            {
+                "type": "right_mouse_button_up",
                 "value": null
             }
         ]

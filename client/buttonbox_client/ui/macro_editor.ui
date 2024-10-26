@@ -450,17 +450,32 @@
              </item>
              <item>
               <property name="text">
-               <string>Left Mouse Button</string>
+               <string>Left Mouse Button Down</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>Middle Mouse Button</string>
+               <string>Left Mouse Button Up</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>Right Mouse Button</string>
+               <string>Middle Mouse Button Down</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Middle Mouse Button Up</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Right Mouse Button Down</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Right Mouse Button Up</string>
               </property>
              </item>
             </widget>

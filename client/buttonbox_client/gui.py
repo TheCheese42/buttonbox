@@ -1178,14 +1178,23 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
         elif what == 3:  # Delay
             type = "delay"
             value = 50
-        elif what == 4:  # Left Mouse Button
-            type = "left_mouse_button"
+        elif what == 4:  # Left Mouse Button Down
+            type = "left_mouse_button_down"
             value = None
-        elif what == 5:  # Middle Mouse Button
-            type = "middle_mouse_button"
+        elif what == 5:  # Left Mouse Button Up
+            type = "left_mouse_button_up"
             value = None
-        else:  # Right Mouse Button
-            type = "right_mouse_button"
+        elif what == 6:  # Middle Mouse Button Down
+            type = "middle_mouse_button_down"
+            value = None
+        elif what == 7:  # Middle Mouse Button Up
+            type = "middle_mouse_button_up"
+            value = None
+        elif what == 8:  # Right Mouse Button Down
+            type = "right_mouse_button_down"
+            value = None
+        else:  # Right Mouse Button Up
+            type = "right_mouse_button_up"
             value = None
         action: config.MACRO_ACTION = {
             "type": type,
