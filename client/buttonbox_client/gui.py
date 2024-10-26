@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 from pynput.keyboard import Key
 from PyQt6.QtCore import QModelIndex, Qt, QTimer
-from PyQt6.QtGui import QCloseEvent, QKeySequence
+from PyQt6.QtGui import QCloseEvent, QKeySequence, QMouseEvent
 from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QFormLayout,
-                             QKeySequenceEdit, QLabel, QLineEdit,
+                             QKeySequenceEdit, QLabel, QLineEdit, QListWidget,
                              QListWidgetItem, QMainWindow, QMessageBox,
                              QWidget)
 from serial import SerialException
@@ -1116,16 +1116,25 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
+
+        def _mousePressEvent(e: QMouseEvent) -> None:
+            super(QListWidget, self.actionList).mousePressEvent(e)
+            if not self.actionList.indexAt(e.pos()).isValid():
+                self.actionList.clearSelection()
+
+        self.actionList.mousePressEvent = _mousePressEvent
+
         self.updateUi()
 
     def updateUi(self) -> None:
         self.macroList.clear()
         for macro in self.macros:
-            item = QListWidgetItem(macro["name"])
+            item = QListWidgetItem(macro["name"])  # type: ignore[arg-type]
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
             self.items_macros.append((item, macro))
             self.macroList.addItem(item)
         self.actionList.clear()
+        self._set_enabled_actions(False)
 
     def connectSignalsSlots(self) -> None:
         self.macroList.itemSelectionChanged.connect(self.macro_list_selection)
@@ -1148,7 +1157,16 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
         except IndexError:
             sel_index = None
 
+        if self.cur_macro is None:
+            show_error(
+                self, "Invalid Action",
+                "No Macro is selected, please report this.",
+            )
+            config.log("No current Macro found when deleting action", "ERROR")
+            return
+
         what = self.insertActionCombo.currentIndex()
+        value: Optional[Union[str, int]]
         if what == 0:  # Default
             return
         if what == 1:  # Press Key
@@ -1169,7 +1187,7 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
         else:  # Right Mouse Button
             type = "right_mouse_button"
             value = None
-        action = {
+        action: config.MACRO_ACTION = {
             "type": type,
             "value": value,
         }
@@ -1178,9 +1196,11 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
             idx = sel_index.row()
             self.items_actions.insert(idx, (item, action))
             self.actionList.insertItem(idx, item)
+            self.cur_macro["actions"].insert(idx, action)  # type: ignore[union-attr]  # noqa
         else:
             self.items_actions.append((item, action))
             self.actionList.addItem(item)
+            self.cur_macro["actions"].append(action)  # type: ignore[union-attr]  # noqa
         self.insertActionCombo.setCurrentIndex(0)
 
     def update_n_times(self) -> None:
@@ -1208,6 +1228,7 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
             config.log("No current Macro found when deleting action", "ERROR")
             return
         self.cur_macro["mode"] = "until_pressed_again"
+        self.modeNTimesSpin.setValue(0)
 
     def mode_until_released(self) -> None:
         if self.cur_macro is None:
@@ -1218,6 +1239,7 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
             config.log("No current Macro found when deleting action", "ERROR")
             return
         self.cur_macro["mode"] = "until_released"
+        self.modeNTimesSpin.setValue(0)
 
     def delete_action(self) -> None:
         try:
@@ -1233,12 +1255,13 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
             return
         for i, (item, action) in enumerate(self.items_actions):
             if item == selected:
-                for j, macro_action in enumerate(self.cur_macro["actions"]):
+                for j, macro_action in enumerate(self.cur_macro["actions"]):  # type: ignore[arg-type]  # noqa
                     if action is macro_action:
-                        del self.cur_macro["actions"][j]
+                        del self.cur_macro["actions"][j]  # type: ignore[union-attr]  # noqa
                 del self.items_actions[i]
                 break
         self.actionList.removeItemWidget(selected)
+        self.macro_list_selection()
 
     def change_action(self) -> None:
         try:
@@ -1252,13 +1275,14 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
         if cur_action is None:
             return
 
+        mode: Literal["delay", "key"]
         if cur_action["type"] == "delay":
             mode = "delay"
         elif cur_action["type"] in ("press_key", "release_key"):
             mode = "key"
         else:
             return
-        dialog = MacroActionEditor(self, mode, cur_action["value"])
+        dialog = MacroActionEditor(self, mode, cur_action["value"])  # type: ignore[arg-type]  # noqa
         if dialog.exec() == QDialog.DialogCode.Accepted:
             if mode == "delay":
                 cur_action["value"] = dialog.delaySpin.value()
@@ -1289,13 +1313,13 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
         self._set_enabled_actions(False)
 
     def new_macro(self) -> None:
-        macro = {
+        macro: config.MACRO = {
             "name": "New Macro",
             "mode": 1,
             "actions": [],
         }
         self.macros.append(macro)
-        item = QListWidgetItem(macro["name"])
+        item = QListWidgetItem(macro["name"])  # type: ignore[arg-type]
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
         self.macroList.addItem(item)
         self.items_macros.append((item, macro))
@@ -1330,9 +1354,9 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
         self._set_enabled_actions(True)
         self.actionList.clear()
         self.items_actions.clear()
-        for action in cur_macro["actions"]:
-            item = QListWidgetItem(self._action_to_str(action))
-            self.items_actions.append((item, action))
+        for action in cur_macro["actions"]:  # type: ignore[union-attr]
+            item = QListWidgetItem(self._action_to_str(action))  # type: ignore[arg-type]  # noqa
+            self.items_actions.append((item, action))  # type: ignore[arg-type]
             self.actionList.addItem(item)
         self.modeUntilReleasedRadio.blockSignals(True)
         self.modeUntilPressedRadio.blockSignals(True)
@@ -1358,8 +1382,8 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
         self.modeNTimesRadio.blockSignals(False)
         self.modeNTimesSpin.blockSignals(False)
 
-    def _action_to_str(self, action: config.MACRO_ACTION) -> None:
-        name = action["type"].title().replace("_", " ")
+    def _action_to_str(self, action: config.MACRO_ACTION) -> str:
+        name = action["type"].title().replace("_", " ")  # type: ignore[union-attr]  # noqa
         if action["type"] in ("press_key", "release_key", "delay"):
             name += f": {action['value']}"
         return name

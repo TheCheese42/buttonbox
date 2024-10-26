@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>752</width>
+    <width>753</width>
     <height>379</height>
    </rect>
   </property>
@@ -96,9 +96,6 @@
            <width>200</width>
            <height>16777215</height>
           </size>
-         </property>
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
          </property>
          <property name="showDropIndicator" stdset="0">
           <bool>false</bool>
@@ -366,7 +363,11 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QSpinBox" name="modeNTimesSpin"/>
+                <widget class="QSpinBox" name="modeNTimesSpin">
+                 <property name="maximum">
+                  <number>9999999</number>
+                 </property>
+                </widget>
                </item>
               </layout>
              </item>
