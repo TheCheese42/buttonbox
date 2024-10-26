@@ -1395,6 +1395,8 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
         name = action["type"].title().replace("_", " ")  # type: ignore[union-attr]  # noqa
         if action["type"] in ("press_key", "release_key", "delay"):
             name += f": {action['value']}"
+        if action["type"] == "delay":
+            name += "ms"
         return name
 
 
@@ -1415,6 +1417,7 @@ class MacroActionEditor(QDialog, Ui_EditAction):  # type: ignore[misc]  # noqa
         if self.type == "delay":
             self.delayLabel.setEnabled(True)
             self.delaySpin.setEnabled(True)
+            self.msLabel.setEnabled(True)
             self.keyLabel.setMaximumHeight(0)
             self.keySequence.setMaximumHeight(0)
             if not isinstance(self.preset, int):
@@ -1434,6 +1437,7 @@ class MacroActionEditor(QDialog, Ui_EditAction):  # type: ignore[misc]  # noqa
             self.keySequence.setEnabled(True)
             self.delayLabel.setMaximumHeight(0)
             self.delaySpin.setMaximumHeight(0)
+            self.msLabel.setMaximumHeight(0)
             if not isinstance(self.preset, str):
                 show_error(
                     self, "Invalid Preset",
