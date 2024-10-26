@@ -859,7 +859,7 @@
      <normaloff>:/icons/zap.png</normaloff>:/icons/zap.png</iconset>
    </property>
    <property name="text">
-    <string>Keyboard Shortcuts...</string>
+    <string>Shortcut Editor</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+K</string>
