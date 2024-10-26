@@ -9,11 +9,12 @@ In its current form, there are 6 different components:
 
 - An `esp32`
 - 6*3 Button Matrix (using analog Ports)
-- 1 Single Button
-- 4 Diodes
+- 1 Additional push Button
+- 4 Led Diodes
 - 1 Rotary Encoder
 - 1 OLED Display (128x64px)
 
+And some additional passive components
 Wokwi project: <https://wokwi.com/projects/410915727655762945> (illustrational).
 
 ## Installing
