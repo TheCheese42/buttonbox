@@ -1,12 +1,12 @@
 import platform
 import string
 import sys
+import time
 import webbrowser
 from copy import deepcopy
 from itertools import zip_longest
 from pathlib import Path
 from subprocess import getoutput
-import time
 from typing import TYPE_CHECKING, Any, Optional
 
 from pynput.keyboard import Key

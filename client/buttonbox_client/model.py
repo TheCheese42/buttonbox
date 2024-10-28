@@ -546,9 +546,9 @@ class TestGame(Game):
     def led_manager(self) -> None:
         states = (self.win.td0.isChecked(), self.win.td1.isChecked(),
                   self.win.td2.isChecked(), self.win.td3.isChecked(),)
-        states = map(str, map(int, states))
+        str_states = map(str, map(int, states))
         config.log(
-            f"LED_MANAGER TestGame updating ({':'.join(states)})", "DEBUG"
+            f"LED_MANAGER TestGame updating ({':'.join(str_states)})", "DEBUG"
         )
         self._led_extra(self.win.td0.isChecked())
         self._led_left(self.win.td1.isChecked())
