@@ -1,6 +1,7 @@
 import platform
 import string
 import sys
+import time
 import webbrowser
 from copy import deepcopy
 from itertools import zip_longest
@@ -74,6 +75,10 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         super().__init__(None)
         self.conn = conn
         self.controller = model.start_controller()
+        self.last_rot_clockwise_time = 0.0
+        self.rot_clockwise_count = 0
+        self.last_rot_counterclockwise_time = 0.0
+        self.rot_counterclockwise_count = 0
         self.main_widget_detected = False
         self.macros = config.get_macros()
         self.profiles = model.sort_dict(model.load_profiles())
@@ -206,24 +211,46 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         led_manager(self.games_instances[game])
 
     def _rot_clockwise(self) -> None:
-        if self.test_mode:
-            if self.dial.value() >= self.dial.maximum():
-                self.dial.setValue(self.dial.minimum())
+        if time.time() - self.last_rot_clockwise_time > 1.0:
+            self.rot_clockwise_count = 0
+            self.last_rot_clockwise_time = time.time()
+        self.rot_clockwise_count += 1
+
+        if self.rot_clockwise_count >= config.get_config_value(
+            "rotary_encoder_sensitivity"
+        ):
+            self.rot_clockwise_count = 0
+            self.last_rot_clockwise_time = time.time()
+
+            if self.test_mode:
+                if self.dial.value() >= self.dial.maximum():
+                    self.dial.setValue(self.dial.minimum())
+                else:
+                    self.dial.setValue(self.dial.value() + 1)
             else:
-                self.dial.setValue(self.dial.value() + 1)
-        else:
-            config.log("Issuing Volume Up", "DEBUG")
-            self.controller.tap(Key.media_volume_up)
+                config.log("Issuing Volume Up", "DEBUG")
+                self.controller.tap(Key.media_volume_up)
 
     def _rot_counterclockwise(self) -> None:
-        if self.test_mode:
-            if self.dial.value() <= self.dial.minimum():
-                self.dial.setValue(self.dial.maximum())
+        if time.time() - self.last_rot_counterclockwise_time > 1.0:
+            self.rot_counterclockwise_count = 0
+            self.last_rot_counterclockwise_time = time.time()
+        self.rot_counterclockwise_count += 1
+
+        if self.rot_counterclockwise_count >= config.get_config_value(
+            "rotary_encoder_sensitivity"
+        ):
+            self.rot_counterclockwise_count = 0
+            self.last_rot_counterclockwise_time = time.time()
+
+            if self.test_mode:
+                if self.dial.value() <= self.dial.minimum():
+                    self.dial.setValue(self.dial.maximum())
+                else:
+                    self.dial.setValue(self.dial.value() - 1)
             else:
-                self.dial.setValue(self.dial.value() - 1)
-        else:
-            config.log("Issuing Volume Down", "DEBUG")
-            self.controller.tap(Key.media_volume_down)
+                config.log("Issuing Volume Down", "DEBUG")
+                self.controller.tap(Key.media_volume_down)
 
     def _button_single(self, state: int) -> None:
         if not self.current_profile:
@@ -485,6 +512,8 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             config.set_config_value("baudrate", selected_baudrate)
             self.conn.port = selected_port
             self.conn.baudrate = selected_baudrate
+            rotary_sens = dialog.rotarySensSpin.value()
+            config.set_config_value("rotary_encoder_sensitivity", rotary_sens)
             auto_detect_profiles = dialog.autoDetectCheck.isChecked()
             config.set_config_value(
                 "auto_detect_profiles", auto_detect_profiles
@@ -999,6 +1028,10 @@ class Settings(QDialog, Ui_Settings):  # type: ignore[misc]
         self.portBox.setCurrentIndex(cur_index)
 
         self.baudrateSpin.setValue(config.get_config_value("baudrate"))
+
+        self.rotarySensSpin.setValue(config.get_config_value(
+            "rotary_encoder_sensitivity"
+        ))
 
         self.autoDetectCheck.setChecked(
             config.get_config_value("auto_detect_profiles")
