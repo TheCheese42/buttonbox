@@ -2,7 +2,7 @@ import json
 import platform
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from PyQt6.QtCore import QStandardPaths
 
@@ -28,6 +28,7 @@ DEFAULT_CONFIG = {
     "dark": False,
     "default_port": "COM0" if platform.system() == "Windows" else "/dev/ttyS0",
     "baudrate": 115200,
+    "rotary_encoder_sensitivity": 1,
     "auto_detect_profiles": True,
     "hide_to_tray": True,
 }
@@ -98,7 +99,7 @@ def get_config_value(key: str) -> Any:
     return val
 
 
-def set_config_value(key: str, value: str) -> None:
+def set_config_value(key: str, value: Union[str, int, bool]) -> None:
     config = _get_config()
     config[key] = value
     _overwrite_config(config)
