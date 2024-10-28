@@ -23,6 +23,9 @@ And some additional passive components:
 
 Wokwi project: <https://wokwi.com/projects/410915727655762945> (illustrational).
 
+Technical Schematics:
+![image](./screenshots/schematics.jpeg)
+
 ## Installing
 
 _See: `INSTALL.md`_
@@ -36,7 +39,7 @@ As used Pins and other hardware-specific values may vary, everything that might 
 
 The PC client is found at `/client` and is implemented as a PyQt6 application that runs in the background all the time (can be stopped from the GUI under `File -> Quit`). It lives in the system tray/notification area.
 
-![image](/screenshots/client_main.png)
+![image](./screenshots/client_main.png)
 
 The client has 2 states:
 
