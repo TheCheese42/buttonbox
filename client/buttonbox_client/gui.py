@@ -75,6 +75,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         self.rot_clockwise_count = 0
         self.last_rot_counterclockwise_time = 0.0
         self.rot_counterclockwise_count = 0
+        self.last_rot_both_time = 0.0
         self.main_widget_detected = False
         self.profiles = model.sort_dict(model.load_profiles())
         self.current_profile: Optional[model.Profile] = None
@@ -206,14 +207,19 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
         led_manager(self.games_instances[game])
 
     def _rot_clockwise(self) -> None:
+        debounce_time: float = config.get_config_value(
+            "rotary_encoder_debounce_time"
+        )
+        if time.time() - debounce_time < self.last_rot_both_time:
+            return
+
         if time.time() - self.last_rot_clockwise_time > 1.0:
             self.rot_clockwise_count = 0
             self.last_rot_clockwise_time = time.time()
         self.rot_clockwise_count += 1
 
-        if self.rot_clockwise_count >= config.get_config_value(
-            "rotary_encoder_sensitivity"
-        ):
+        sens: int = config.get_config_value("rotary_encoder_sensitivity")
+        if self.rot_clockwise_count >= sens:
             self.rot_clockwise_count = 0
             self.last_rot_clockwise_time = time.time()
 
@@ -227,14 +233,19 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 self.controller.tap(Key.media_volume_up)
 
     def _rot_counterclockwise(self) -> None:
+        debounce_time: float = config.get_config_value(
+            "rotary_encoder_debounce_time"
+        )
+        if time.time() - debounce_time < self.last_rot_both_time:
+            return
+
         if time.time() - self.last_rot_counterclockwise_time > 1.0:
             self.rot_counterclockwise_count = 0
             self.last_rot_counterclockwise_time = time.time()
         self.rot_counterclockwise_count += 1
 
-        if self.rot_counterclockwise_count >= config.get_config_value(
-            "rotary_encoder_sensitivity"
-        ):
+        sens: int = config.get_config_value("rotary_encoder_sensitivity")
+        if self.rot_counterclockwise_count >= sens:
             self.rot_counterclockwise_count = 0
             self.last_rot_counterclockwise_time = time.time()
 
@@ -508,6 +519,10 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.conn.baudrate = selected_baudrate
             rotary_sens = dialog.rotarySensSpin.value()
             config.set_config_value("rotary_encoder_sensitivity", rotary_sens)
+            rotary_debounce = dialog.rotaryDebounceSpin.value()
+            config.set_config_value(
+                "rotary_encoder_debounce_time", rotary_debounce
+            )
             auto_detect_profiles = dialog.autoDetectCheck.isChecked()
             config.set_config_value(
                 "auto_detect_profiles", auto_detect_profiles
@@ -1019,6 +1034,10 @@ class Settings(QDialog, Ui_Settings):  # type: ignore[misc]
 
         self.rotarySensSpin.setValue(config.get_config_value(
             "rotary_encoder_sensitivity"
+        ))
+
+        self.rotaryDebounceSpin.setValue(config.get_config_value(
+            "rotary_encoder_debounce_time"
         ))
 
         self.autoDetectCheck.setChecked(
