@@ -29,6 +29,7 @@ DEFAULT_CONFIG = {
     "default_port": "COM0" if platform.system() == "Windows" else "/dev/ttyS0",
     "baudrate": 115200,
     "rotary_encoder_sensitivity": 1,
+    "rotary_encoder_debounce_time": 0.0,
     "auto_detect_profiles": True,
     "hide_to_tray": True,
 }
@@ -83,7 +84,7 @@ def init_config() -> None:
 def _get_config() -> dict[str, Any]:
     with open(CONFIG_PATH, "r", encoding="utf-8") as fp:
         conf: dict[str, Any] = json.load(fp)
-        return conf
+    return conf
 
 
 def _overwrite_config(config: dict[str, Any]) -> None:
@@ -99,7 +100,7 @@ def get_config_value(key: str) -> Any:
     return val
 
 
-def set_config_value(key: str, value: Union[str, int, bool]) -> None:
+def set_config_value(key: str, value: Union[str, int, float, bool]) -> None:
     config = _get_config()
     config[key] = value
     _overwrite_config(config)
