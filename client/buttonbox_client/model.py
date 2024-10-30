@@ -25,6 +25,54 @@ if TYPE_CHECKING:
     from .__main__ import Connection
     from .gui import Window
 
+MODS = ["Ctrl", "Shift", "Alt", "AltGr", "Tab"]
+KEY_LOOKUP = {
+    "Alt": Key.alt,
+    "AltGr": Key.alt_gr,
+    "Backspace": Key.backspace,
+    "CapsLock": Key.caps_lock,
+    "Ctrl": Key.ctrl,
+    "Del": Key.delete,
+    "Down": Key.down,
+    "End": Key.end,
+    "Return": Key.enter,
+    "Esc": Key.esc,
+    "F1": Key.f1,
+    "F2": Key.f2,
+    "F3": Key.f3,
+    "F4": Key.f4,
+    "F5": Key.f5,
+    "F6": Key.f6,
+    "F7": Key.f7,
+    "F8": Key.f8,
+    "F9": Key.f9,
+    "F10": Key.f10,
+    "F11": Key.f11,
+    "F12": Key.f12,
+    "F13": Key.f13,
+    "F14": Key.f14,
+    "F15": Key.f15,
+    "F16": Key.f16,
+    "F17": Key.f17,
+    "F18": Key.f18,
+    "F19": Key.f19,
+    "F20": Key.f20,
+    "Home Page": Key.home,
+    "Ins": Key.insert,
+    "Left": Key.left,
+    "NumLock": Key.num_lock,
+    "PgDown": Key.page_down,
+    "PgUp": Key.page_up,
+    "Print": Key.print_screen,
+    "Right": Key.right,
+    "ScrollLock": Key.scroll_lock,
+    "Shift": Key.shift,
+    "Space": Key.space,
+    "Tab": Key.tab,
+    "Up": Key.up,
+}
+
+
 STATE = {True: "HIGH", False: "LOW"}
 
 GAME_ACTION_ENTRY = dict[str, str]
@@ -380,61 +428,17 @@ class Game:
         shortcut: str
     ) -> list[tuple[list[Key], Optional[KeyCode]]]:
         """Parses Qt KeySequences into pynput keys."""
-        key_lookup = {
-            "Alt": Key.alt,
-            "Backspace": Key.backspace,
-            "CapsLock": Key.caps_lock,
-            "Ctrl": Key.ctrl,
-            "Del": Key.delete,
-            "Down": Key.down,
-            "End": Key.end,
-            "Return": Key.enter,
-            "Esc": Key.esc,
-            "F1": Key.f1,
-            "F2": Key.f2,
-            "F3": Key.f3,
-            "F4": Key.f4,
-            "F5": Key.f5,
-            "F6": Key.f6,
-            "F7": Key.f7,
-            "F8": Key.f8,
-            "F9": Key.f9,
-            "F10": Key.f10,
-            "F11": Key.f11,
-            "F12": Key.f12,
-            "F13": Key.f13,
-            "F14": Key.f14,
-            "F15": Key.f15,
-            "F16": Key.f16,
-            "F17": Key.f17,
-            "F18": Key.f18,
-            "F19": Key.f19,
-            "F20": Key.f20,
-            "Home Page": Key.home,
-            "Ins": Key.insert,
-            "Left": Key.left,
-            "NumLock": Key.num_lock,
-            "PgDown": Key.page_down,
-            "PgUp": Key.page_up,
-            "Print": Key.print_screen,
-            "Right": Key.right,
-            "ScrollLock": Key.scroll_lock,
-            "Shift": Key.shift,
-            "Space": Key.space,
-            "Tab": Key.tab,
-            "Up": Key.up,
-        }
         cuts: list[tuple[list[Key], Optional[KeyCode]]] = []
         combos = map(str.strip, shortcut.split(","))
         for combo in combos:
             key: Optional[str]
             *mods, key = combo.split("+")
-            if key in key_lookup:
+            if key in KEY_LOOKUP:
                 mods.append(key)
                 key = None
             trans_mods: list[Key] = []
             for mod in mods:
-                if (result := key_lookup.get(mod)):
+                if (result := KEY_LOOKUP.get(mod)):
                     trans_mods.append(result)
             if key is None:
                 key_code = None
@@ -448,18 +452,43 @@ class Game:
             cuts.append((trans_mods, key_code))
         return cuts
 
+    def _issue_macro(self, state: bool, macro_name: str) -> None:
+        macros = config.get_macros()
+        macro: Optional[config.MACRO] = None
+        for mac in macros:
+            if mac["name"] == macro_name:
+                macro = mac
+        if macro is None:
+            config.log(
+                f"_issue_macro called with invalid macro ({macro_name})",
+                "ERROR",
+            )
+            return
+
+        mode = macro["mode"]
+
+        # TODO Add dict self.macros_threads with macro names and threads
+        # TODO that execute the macros so they can be stopped depending
+        # TODO on the mode. Or not. If a macro is running that should not
+        # TODO be stopped (mode = any number), nothing is done.
+
     def _issue_shortcut(self, state: bool, shortcut: str) -> None:
-        shortcuts = self._parse_shortcut(shortcut)
-        for combo in shortcuts:
-            mods, key_code = combo
-            all_keys: list[Union[Key, Optional[KeyCode]]] = [*mods, key_code]
-            for key in all_keys:
-                if key is None:
-                    continue
-                if state:
-                    self.controller.press(key)
-                else:
-                    self.controller.release(key)
+        if shortcut.startswith("macro:"):
+            self._issue_macro(state, shortcut.split(":", 1)[1])
+        else:
+            shortcuts = self._parse_shortcut(shortcut)
+            for combo in shortcuts:
+                mods, key_code = combo
+                all_keys: list[Union[Key, Optional[KeyCode]]] = [
+                    *mods, key_code
+                ]
+                for key in all_keys:
+                    if key is None:
+                        continue
+                    if state:
+                        self.controller.press(key)
+                    else:
+                        self.controller.release(key)
 
 
 class Default(Game):

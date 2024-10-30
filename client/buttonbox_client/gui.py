@@ -4,6 +4,7 @@ import sys
 import time
 import webbrowser
 from copy import deepcopy
+from functools import partial
 from itertools import zip_longest
 from pathlib import Path
 from subprocess import getoutput
@@ -12,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 from pynput.keyboard import Key
 from PyQt6.QtCore import QModelIndex, Qt, QTimer
 from PyQt6.QtGui import QCloseEvent, QKeySequence, QMouseEvent
-from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QFormLayout,
+from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QHBoxLayout,
                              QKeySequenceEdit, QLabel, QLineEdit, QListWidget,
                              QListWidgetItem, QMainWindow, QMessageBox,
                              QWidget)
@@ -540,13 +541,17 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
             self.conn.reconnect()
 
     def keyboard_shortcuts(self) -> None:
-        dialog = KeyboardShortcuts(self)
+        dialog = KeyboardShortcuts(self, self.macros)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             for entry in dialog.items:
                 game = entry[0]
                 action = entry[1]
-                edit = entry[2]
-                shortcut = edit.keySequence().toString()
+                combo = entry[2]
+                edit = entry[3]
+                if combo.currentIndex() == 0:
+                    shortcut = edit.keySequence().toString()
+                else:
+                    shortcut = f"macro:{combo.currentText()}"
                 try:
                     shortcut.encode("utf-8")
                 except UnicodeEncodeError:
@@ -1062,10 +1067,11 @@ class Settings(QDialog, Ui_Settings):  # type: ignore[misc]
 
 
 class KeyboardShortcuts(QDialog, Ui_KeyboardShortcuts):  # type: ignore[misc]
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, parent: QWidget, macros: list[config.MACRO]) -> None:
         super().__init__(parent)
-        # Ex.: [("game1", "action1", QKeySequenceEdit()), ...]
-        self.items: list[tuple[str, str, QKeySequenceEdit]] = []
+        self.macros = macros
+        # Ex.: [("game1", "action1", QComboBox(), QKeySequenceEdit()), ...]
+        self.items: list[tuple[str, str, QComboBox, QKeySequenceEdit]] = []
         self.setupUi(self)
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
@@ -1088,15 +1094,46 @@ class KeyboardShortcuts(QDialog, Ui_KeyboardShortcuts):  # type: ignore[misc]
                 return
             game: type[model.Game]  # type: ignore[no-redef]
             game_str = model.reverse_lookup(model.GAME_LOOKUP, game)
-            form = QFormLayout()
+            hbox = QHBoxLayout()
             label = QLabel()
             label.setText(f"{game.game_name}: {game.name_for_action(action)}")
+
+            shortcut = config.get_keyboard_shortcut(game_str, action.__name__)
+            if shortcut is None:
+                shortcut = ""
+
+            combo = QComboBox()
+            combo.addItem("Plain Shortcut")
+            for i, macro in enumerate(self.macros):
+                combo.addItem(macro["name"])  # type: ignore[arg-type]
+            index = 0
+            if shortcut.startswith("macro:"):
+                macro_name = shortcut.split(":", 1)[1]
+                for i in range(combo.count()):
+                    text = combo.itemText(i)
+                    if text == macro_name:
+                        index = i
+            combo.setCurrentIndex(index)
+
             edit = QKeySequenceEdit()
-            if (sc := config.get_keyboard_shortcut(game_str, action.__name__)):
-                edit.setKeySequence(QKeySequence.fromString(sc))
-            form.addRow(label, edit)
-            self.items.append((game_str, action.__name__, edit))
-            lo.addLayout(form)
+            combo.currentIndexChanged.connect(
+                partial(self._combo_changed, combo, edit)
+            )
+            self._combo_changed(combo, edit)
+            if shortcut and index == 0:
+                edit.setKeySequence(QKeySequence.fromString(shortcut))
+
+            hbox.addWidget(label)
+            hbox.addWidget(combo)
+            hbox.addWidget(edit)
+            self.items.append((game_str, action.__name__, combo, edit))
+            lo.addLayout(hbox)
+
+    def _combo_changed(self, combo: QComboBox, edit: QKeySequenceEdit) -> None:
+        if combo.currentIndex() != 0:
+            edit.setDisabled(True)
+        else:
+            edit.setEnabled(True)
 
 
 class CustomActionsManager(QDialog, Ui_CustomActionsManager):  # type: ignore[misc]  # noqa
@@ -1348,18 +1385,22 @@ class MacroEditor(QDialog, Ui_MacroEditor):  # type: ignore[misc]
             if mode == "delay":
                 cur_action["value"] = dialog.delaySpin.value()
             else:
-                shortcut = dialog.keySequence.keySequence().toString()
-                try:
-                    shortcut.encode("utf-8")
-                except UnicodeEncodeError:
-                    config.log("Invalid shortcut configured", "ERROR")
-                    show_error(
-                        self, "Invalid Character",
-                        "You entered an invalid character in the shortcuts "
-                        "menu. This commonly happens when using alternate "
-                        "graphics (AltGr). Please do not use these characters."
-                    )
-                    return
+                if dialog.modCombo.currentText() in model.MODS:
+                    shortcut = dialog.modCombo.currentText()
+                else:
+                    shortcut = dialog.keySequence.keySequence().toString()
+                    try:
+                        shortcut.encode("utf-8")
+                    except UnicodeEncodeError:
+                        config.log("Invalid shortcut configured", "ERROR")
+                        show_error(
+                            self, "Invalid Character",
+                            "You entered an invalid character in the shortcuts"
+                            " menu. This commonly happens when using alternate"
+                            " graphics (AltGr). Please do not use these "
+                            "characters."
+                        )
+                        return
                 cur_action["value"] = shortcut
             self._refresh_action_list_names()
 
@@ -1474,6 +1515,7 @@ class MacroActionEditor(QDialog, Ui_EditAction):  # type: ignore[misc]  # noqa
         self.type = type
         self.preset = preset
         self.setupUi(self)
+        self.connectSignalsSlots()
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
         super().setupUi(*args, **kwargs)
@@ -1482,6 +1524,7 @@ class MacroActionEditor(QDialog, Ui_EditAction):  # type: ignore[misc]  # noqa
             self.delaySpin.setEnabled(True)
             self.msLabel.setEnabled(True)
             self.keyLabel.setMaximumHeight(0)
+            self.modCombo.setMaximumHeight(0)
             self.keySequence.setMaximumHeight(0)
             if not isinstance(self.preset, int):
                 show_error(
@@ -1497,6 +1540,7 @@ class MacroActionEditor(QDialog, Ui_EditAction):  # type: ignore[misc]  # noqa
             self.delaySpin.setValue(self.preset)
         else:
             self.keyLabel.setEnabled(True)
+            self.modCombo.setEnabled(True)
             self.keySequence.setEnabled(True)
             self.delayLabel.setMaximumHeight(0)
             self.delaySpin.setMaximumHeight(0)
@@ -1515,6 +1559,26 @@ class MacroActionEditor(QDialog, Ui_EditAction):  # type: ignore[misc]  # noqa
             self.keySequence.setKeySequence(
                 QKeySequence.fromString(self.preset)
             )
+            self.modCombo.clear()
+            index = 0
+            for idx, i in enumerate(["Shortcut"] + model.MODS):
+                self.modCombo.addItem(i)
+                if self.preset == i:
+                    index = idx
+            self.modCombo.setCurrentIndex(index)
+            if index != 0:
+                self.keySequence.setKeySequence(QKeySequence())
+            self.mod_combo_changed()
+
+    def connectSignalsSlots(self) -> None:
+        self.modCombo.currentTextChanged.connect(self.mod_combo_changed)
+
+    def mod_combo_changed(self) -> None:
+        text = self.modCombo.currentText()
+        if text in model.MODS:
+            self.keySequence.setDisabled(True)
+        else:
+            self.keySequence.setEnabled(True)
 
 
 def launch_gui(conn: "Connection") -> tuple[QApplication, Window]:
