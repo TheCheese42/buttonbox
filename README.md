@@ -103,7 +103,7 @@ Issuing plain Keyboard Shortcuts and basic Macros isn't exactly a big deal, whic
 
 Custom Actions can be added in the Custom Actions Manager under `Edit` > `Manage Custom Actions...`. This Dialog only allows for creating new Actions, as well as deleting them. After creating an Action, go to the Shortcuts Editor at `Edit` > `Keyboard Shortcuts...` and set the Key Combination for your newly created Custom Action.
 
-> For an Image showcasing the Custom Actions Manger, see [here](./screenshots/client_custom_actions.png).
+![image](./screenshots/client_custom_actions.png).
 
 ### Shortcut Editor
 
@@ -111,9 +111,11 @@ Many Games and other Software are best controlled using Keyboard Shortcuts. Thes
 
 If an Action is not displayed in the Shortcut Editor, it means that the Action does not make use of Keyboard Shortcuts.
 
-> For an Image showcasing the Shortcut Editor, see [here](./screenshots/client_shortcuts.png).
+![image](./screenshots/client_shortcuts.png).
 
 ### Macro Manager
+
+![image](./screenshots/client_macro.png)
 
 Macros can be selected for Custom Actions in the Shortcut Editor. They're defined in the Macro Manager at `Edit` > `Manage Macros...`. On the left there's a List of Macros, allowing to add and delete Macros, as well as editing their Name by double clicking on it. On the right, Macro Actions can be created and configured, as well as the Macro Run Mode.
 
