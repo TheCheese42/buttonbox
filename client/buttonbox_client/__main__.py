@@ -66,17 +66,23 @@ class Connection:
             elif not self.handshaked:
                 try:
                     self.ser.read_all()
-                except (OSError, serial.SerialException, TypeError):
+                except (
+                    OSError, serial.SerialException,
+                    TypeError, AttributeError,
+                ):
                     pass
                 try:
                     self.ser.write(b"HANDSHAKE\n")
-                except (OSError, serial.SerialException, TypeError) as e:
+                except (
+                    OSError, serial.SerialException,
+                    TypeError, AttributeError,
+                ) as e:
                     self.log(f"Error writing handshake: {e}", "WARNING")
                     continue
                 for _ in range(100):
                     try:
                         in_waiting = self.ser.in_waiting
-                    except (OSError, TypeError) as e:
+                    except (OSError, TypeError, AttributeError) as e:
                         self.log(
                             "Received error when checking for available "
                             f"bytes: {e}",
@@ -87,7 +93,8 @@ class Connection:
                         try:
                             msg = self.ser.read_until().decode("utf-8")
                         except (
-                            OSError, serial.SerialException, TypeError
+                            OSError, serial.SerialException,
+                            TypeError, AttributeError,
                         ) as e:
                             self.log(f"Error reading potential handshake: {e}",
                                      "WARNING")
@@ -113,7 +120,10 @@ class Connection:
                     cmd = self.write_queue.popleft()
                     try:
                         self.ser.write(cmd.encode("utf-8") + b"\n")
-                    except (OSError, serial.SerialException, TypeError) as e:
+                    except (
+                        OSError, serial.SerialException,
+                        TypeError, AttributeError,
+                    ) as e:
                         self.log(f"Error writing '{cmd}': {e}", "WARNING")
                         self.write_queue.append(cmd)
                         continue
@@ -126,7 +136,7 @@ class Connection:
             while True:
                 try:
                     in_waiting = self.ser.in_waiting
-                except (OSError, TypeError) as e:
+                except (OSError, TypeError, AttributeError) as e:
                     self.log(
                         "Received error when checking for available bytes: "
                         f"{e}", "WARNING",
@@ -135,7 +145,10 @@ class Connection:
                 if in_waiting > 0:
                     try:
                         line = self.ser.read_until().decode("utf-8")
-                    except (OSError, serial.SerialException, TypeError) as e:
+                    except (
+                        OSError, serial.SerialException,
+                        TypeError, AttributeError,
+                    ) as e:
                         self.log(f"Error reading waiting bytes: {e}",
                                  "WARNING")
                         continue
