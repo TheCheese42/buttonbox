@@ -5,7 +5,9 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain
 from pathlib import Path
+from random import randint
 from subprocess import getoutput
+from threading import Thread
 from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Union
 
 from pynput.keyboard import Controller as KController
@@ -381,6 +383,30 @@ def start_controller() -> Controller:
     return controller
 
 
+class MacroThread(Thread):
+    def __init__(
+        self,
+        should_stop_list: set["MacroThread"],
+        target: Optional[Callable[..., None]],
+        *args: Any,
+        **kwargs: Any,
+    ):
+        self.should_stop_list = should_stop_list
+        super().__init__(
+            group=None,
+            target=target,
+            name=f"buttonbox-macro-thread-{randint(1000000, 9999999)}",
+            args=args,
+            kwargs=kwargs,
+            daemon=True,
+        )
+        self._stop_triggered = False
+
+    def trigger_stop(self) -> None:
+        self._stop_triggered = True
+        self.should_stop_list.add(self)
+
+
 class Game:
     game_name = "Game"
     priority = 1
@@ -389,6 +415,9 @@ class Game:
     def __init__(self, conn: "Connection", controller: Controller) -> None:
         self.conn = conn
         self.controller = controller
+        self._macros_threads: dict[str, MacroThread] = {}
+        self._macro_threads_that_should_stop: set[MacroThread] = set()
+        self._macro_threads_to_be_released: set[MacroThread] = set()
 
     @staticmethod
     def actions() -> list[Callable[[Any, bool], None]]:
@@ -465,12 +494,101 @@ class Game:
             )
             return
 
-        mode = macro["mode"]
+        mode: Union[str, int] = macro["mode"]  # type: ignore[assignment]
+        name: str = macro["name"]  # type: ignore[assignment]
+        actions: list[config.MACRO_ACTION] = macro["actions"]  # type: ignore[assignment]  # noqa
 
-        # TODO Add dict self.macros_threads with macro names and threads
-        # TODO that execute the macros so they can be stopped depending
-        # TODO on the mode. Or not. If a macro is running that should not
-        # TODO be stopped (mode = any number), nothing is done.
+        if state:
+            if name in self._macros_threads:
+                if mode != "until_pressed_again":
+                    return
+                thread = self._macros_threads[name]
+                if thread in self._macro_threads_to_be_released:
+                    self._macro_threads_to_be_released.remove(thread)
+                else:
+                    self._macros_threads[name].trigger_stop()
+            else:
+                thread = MacroThread(
+                    self._macro_threads_that_should_stop,
+                    self._exec_macro,
+                    m_name=name,
+                    m_mode=mode,
+                    m_actions=actions,
+                )
+                self._macros_threads[name] = thread
+                if mode == "until_pressed_again":
+                    self._macro_threads_to_be_released.add(thread)
+                thread.start()
+        else:
+            if name in self._macros_threads:
+                if mode != "until_released":
+                    return
+                self._macros_threads[name].trigger_stop()
+
+    def _exec_macro(
+        self,
+        m_name: str,
+        m_mode: str,
+        m_actions: list[config.MACRO_ACTION],
+    ) -> None:
+        def run() -> None:
+            for action in m_actions:
+                print(action)
+                type = action["type"]
+                value = action["value"]
+                if type in ("press_key", "release_key"):
+                    if not isinstance(value, str):
+                        config.log(
+                            f"Invalid value for type {type}: {value}", "ERROR"
+                        )
+                        return
+                    shortcuts = self._parse_shortcut(value)
+                    for combo in shortcuts:
+                        mods, key_code = combo
+                        all_keys: list[Union[Key, Optional[KeyCode]]] = [
+                            *mods, key_code
+                        ]
+                        for key in all_keys:
+                            if key is None:
+                                continue
+                            if type == "press_key":
+                                self.controller.press(key)
+                            else:
+                                self.controller.release(key)
+                elif type == "delay":
+                    if not isinstance(value, int):
+                        config.log(
+                            f"Invalid value for type {type}: {value}", "ERROR"
+                        )
+                        return
+                    time.sleep(value / 1000)
+                elif type == "left_mouse_button_down":
+                    self.controller.press(but=Button.left)
+                elif type == "left_mouse_button_up":
+                    self.controller.press(but=Button.left)
+                elif type == "middle_mouse_button_down":
+                    self.controller.press(but=Button.middle)
+                elif type == "middle_mouse_button_up":
+                    self.controller.press(but=Button.middle)
+                elif type == "right_mouse_button_down":
+                    self.controller.press(but=Button.right)
+                elif type == "right_mouse_button_up":
+                    self.controller.press(but=Button.right)
+                else:
+                    config.log(f"Invalid macro action type '{type}'")
+
+        if isinstance(m_mode, int):
+            for _ in range(m_mode):
+                run()
+
+        else:
+            while True:
+                run()
+                thread = self._macros_threads[m_name]
+                if thread in self._macro_threads_that_should_stop:
+                    break
+
+        del self._macros_threads[m_name]
 
     def _issue_shortcut(self, state: bool, shortcut: str) -> None:
         if shortcut.startswith("macro:"):
@@ -589,6 +707,9 @@ CUSTOM_ACTIONS: dict[str, str] = {}
 
 
 def register_custom_shortcut_actions() -> None:
+    for shortcut_action in SHORTCUT_ACTIONS.copy():
+        if find_class(shortcut_action) == Custom:
+            SHORTCUT_ACTIONS.remove(shortcut_action)
     for action in Custom.actions():
         SHORTCUT_ACTIONS.append(action)
 
