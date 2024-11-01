@@ -1,0 +1,44 @@
+[
+    {
+        "name": "Test Macro",
+        "mode": "until_released", // Can also be "until_pressed_again" or any integer for the amount of executions
+        "actions": [
+            {
+                "type": "press_key",
+                "value": "Ctrl+A"
+            },
+            {
+                "type": "delay",
+                "value": 200
+            },
+            {
+                "type": "release_key",
+                "value": "Ctrl+A"
+            },
+            {
+                "type": "left_mouse_button_down",
+                "value": null
+            },
+            {
+                "type": "middle_mouse_button_down",
+                "value": null
+            },
+            {
+                "type": "right_mouse_button_down",
+                "value": null
+            },
+            {
+                "type": "left_mouse_button_up",
+                "value": null
+            },
+            {
+                "type": "middle_mouse_button_up",
+                "value": null
+            },
+            {
+                "type": "right_mouse_button_up",
+                "value": null
+            }
+        ]
+    }
+]

@@ -5,7 +5,9 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain
 from pathlib import Path
+from random import randint
 from subprocess import getoutput
+from threading import Thread
 from typing import TYPE_CHECKING, Any, Callable, Generator, Optional, Union
 
 from pynput.keyboard import Controller as KController
@@ -24,6 +26,54 @@ except ImportError:
 if TYPE_CHECKING:
     from .__main__ import Connection
     from .gui import Window
+
+MODS = ["Ctrl", "Shift", "Alt", "AltGr", "Tab"]
+KEY_LOOKUP = {
+    "Alt": Key.alt,
+    "AltGr": Key.alt_gr,
+    "Backspace": Key.backspace,
+    "CapsLock": Key.caps_lock,
+    "Ctrl": Key.ctrl,
+    "Del": Key.delete,
+    "Down": Key.down,
+    "End": Key.end,
+    "Return": Key.enter,
+    "Esc": Key.esc,
+    "F1": Key.f1,
+    "F2": Key.f2,
+    "F3": Key.f3,
+    "F4": Key.f4,
+    "F5": Key.f5,
+    "F6": Key.f6,
+    "F7": Key.f7,
+    "F8": Key.f8,
+    "F9": Key.f9,
+    "F10": Key.f10,
+    "F11": Key.f11,
+    "F12": Key.f12,
+    "F13": Key.f13,
+    "F14": Key.f14,
+    "F15": Key.f15,
+    "F16": Key.f16,
+    "F17": Key.f17,
+    "F18": Key.f18,
+    "F19": Key.f19,
+    "F20": Key.f20,
+    "Home Page": Key.home,
+    "Ins": Key.insert,
+    "Left": Key.left,
+    "NumLock": Key.num_lock,
+    "PgDown": Key.page_down,
+    "PgUp": Key.page_up,
+    "Print": Key.print_screen,
+    "Right": Key.right,
+    "ScrollLock": Key.scroll_lock,
+    "Shift": Key.shift,
+    "Space": Key.space,
+    "Tab": Key.tab,
+    "Up": Key.up,
+}
+
 
 STATE = {True: "HIGH", False: "LOW"}
 
@@ -333,6 +383,30 @@ def start_controller() -> Controller:
     return controller
 
 
+class MacroThread(Thread):
+    def __init__(
+        self,
+        should_stop_list: set["MacroThread"],
+        target: Optional[Callable[..., None]],
+        *args: Any,
+        **kwargs: Any,
+    ):
+        self.should_stop_list = should_stop_list
+        super().__init__(
+            group=None,
+            target=target,
+            name=f"buttonbox-macro-thread-{randint(1000000, 9999999)}",
+            args=args,
+            kwargs=kwargs,
+            daemon=True,
+        )
+        self._stop_triggered = False
+
+    def trigger_stop(self) -> None:
+        self._stop_triggered = True
+        self.should_stop_list.add(self)
+
+
 class Game:
     game_name = "Game"
     priority = 1
@@ -341,6 +415,9 @@ class Game:
     def __init__(self, conn: "Connection", controller: Controller) -> None:
         self.conn = conn
         self.controller = controller
+        self._macros_threads: dict[str, MacroThread] = {}
+        self._macro_threads_that_should_stop: set[MacroThread] = set()
+        self._macro_threads_to_be_released: set[MacroThread] = set()
 
     @staticmethod
     def actions() -> list[Callable[[Any, bool], None]]:
@@ -380,61 +457,17 @@ class Game:
         shortcut: str
     ) -> list[tuple[list[Key], Optional[KeyCode]]]:
         """Parses Qt KeySequences into pynput keys."""
-        key_lookup = {
-            "Alt": Key.alt,
-            "Backspace": Key.backspace,
-            "CapsLock": Key.caps_lock,
-            "Ctrl": Key.ctrl,
-            "Del": Key.delete,
-            "Down": Key.down,
-            "End": Key.end,
-            "Return": Key.enter,
-            "Esc": Key.esc,
-            "F1": Key.f1,
-            "F2": Key.f2,
-            "F3": Key.f3,
-            "F4": Key.f4,
-            "F5": Key.f5,
-            "F6": Key.f6,
-            "F7": Key.f7,
-            "F8": Key.f8,
-            "F9": Key.f9,
-            "F10": Key.f10,
-            "F11": Key.f11,
-            "F12": Key.f12,
-            "F13": Key.f13,
-            "F14": Key.f14,
-            "F15": Key.f15,
-            "F16": Key.f16,
-            "F17": Key.f17,
-            "F18": Key.f18,
-            "F19": Key.f19,
-            "F20": Key.f20,
-            "Home Page": Key.home,
-            "Ins": Key.insert,
-            "Left": Key.left,
-            "NumLock": Key.num_lock,
-            "PgDown": Key.page_down,
-            "PgUp": Key.page_up,
-            "Print": Key.print_screen,
-            "Right": Key.right,
-            "ScrollLock": Key.scroll_lock,
-            "Shift": Key.shift,
-            "Space": Key.space,
-            "Tab": Key.tab,
-            "Up": Key.up,
-        }
         cuts: list[tuple[list[Key], Optional[KeyCode]]] = []
         combos = map(str.strip, shortcut.split(","))
         for combo in combos:
             key: Optional[str]
             *mods, key = combo.split("+")
-            if key in key_lookup:
+            if key in KEY_LOOKUP:
                 mods.append(key)
                 key = None
             trans_mods: list[Key] = []
             for mod in mods:
-                if (result := key_lookup.get(mod)):
+                if (result := KEY_LOOKUP.get(mod)):
                     trans_mods.append(result)
             if key is None:
                 key_code = None
@@ -448,18 +481,132 @@ class Game:
             cuts.append((trans_mods, key_code))
         return cuts
 
-    def _issue_shortcut(self, state: bool, shortcut: str) -> None:
-        shortcuts = self._parse_shortcut(shortcut)
-        for combo in shortcuts:
-            mods, key_code = combo
-            all_keys: list[Union[Key, Optional[KeyCode]]] = [*mods, key_code]
-            for key in all_keys:
-                if key is None:
-                    continue
-                if state:
-                    self.controller.press(key)
+    def _issue_macro(self, state: bool, macro_name: str) -> None:
+        macros = config.get_macros()
+        macro: Optional[config.MACRO] = None
+        for mac in macros:
+            if mac["name"] == macro_name:
+                macro = mac
+        if macro is None:
+            config.log(
+                f"_issue_macro called with invalid macro ({macro_name})",
+                "ERROR",
+            )
+            return
+
+        mode: Union[str, int] = macro["mode"]  # type: ignore[assignment]
+        name: str = macro["name"]  # type: ignore[assignment]
+        actions: list[config.MACRO_ACTION] = macro["actions"]  # type: ignore[assignment]  # noqa
+
+        if state:
+            if name in self._macros_threads:
+                if mode != "until_pressed_again":
+                    return
+                thread = self._macros_threads[name]
+                if thread in self._macro_threads_to_be_released:
+                    self._macro_threads_to_be_released.remove(thread)
                 else:
-                    self.controller.release(key)
+                    self._macros_threads[name].trigger_stop()
+            else:
+                thread = MacroThread(
+                    self._macro_threads_that_should_stop,
+                    self._exec_macro,
+                    m_name=name,
+                    m_mode=mode,
+                    m_actions=actions,
+                )
+                self._macros_threads[name] = thread
+                if mode == "until_pressed_again":
+                    self._macro_threads_to_be_released.add(thread)
+                thread.start()
+        else:
+            if name in self._macros_threads:
+                if mode != "until_released":
+                    return
+                self._macros_threads[name].trigger_stop()
+
+    def _exec_macro(
+        self,
+        m_name: str,
+        m_mode: str,
+        m_actions: list[config.MACRO_ACTION],
+    ) -> None:
+        def run() -> None:
+            for action in m_actions:
+                print(action)
+                type = action["type"]
+                value = action["value"]
+                if type in ("press_key", "release_key"):
+                    if not isinstance(value, str):
+                        config.log(
+                            f"Invalid value for type {type}: {value}", "ERROR"
+                        )
+                        return
+                    shortcuts = self._parse_shortcut(value)
+                    for combo in shortcuts:
+                        mods, key_code = combo
+                        all_keys: list[Union[Key, Optional[KeyCode]]] = [
+                            *mods, key_code
+                        ]
+                        for key in all_keys:
+                            if key is None:
+                                continue
+                            if type == "press_key":
+                                self.controller.press(key)
+                            else:
+                                self.controller.release(key)
+                elif type == "delay":
+                    if not isinstance(value, int):
+                        config.log(
+                            f"Invalid value for type {type}: {value}", "ERROR"
+                        )
+                        return
+                    time.sleep(value / 1000)
+                elif type == "left_mouse_button_down":
+                    self.controller.press(but=Button.left)
+                elif type == "left_mouse_button_up":
+                    self.controller.press(but=Button.left)
+                elif type == "middle_mouse_button_down":
+                    self.controller.press(but=Button.middle)
+                elif type == "middle_mouse_button_up":
+                    self.controller.press(but=Button.middle)
+                elif type == "right_mouse_button_down":
+                    self.controller.press(but=Button.right)
+                elif type == "right_mouse_button_up":
+                    self.controller.press(but=Button.right)
+                else:
+                    config.log(f"Invalid macro action type '{type}'")
+
+        if isinstance(m_mode, int):
+            for _ in range(m_mode):
+                run()
+
+        else:
+            while True:
+                run()
+                thread = self._macros_threads[m_name]
+                if thread in self._macro_threads_that_should_stop:
+                    break
+
+        del self._macros_threads[m_name]
+
+    def _issue_shortcut(self, state: bool, shortcut: str) -> None:
+        if shortcut.startswith("macro:"):
+            self._issue_macro(state, shortcut.split(":", 1)[1])
+        else:
+            shortcuts = self._parse_shortcut(shortcut)
+            for combo in shortcuts:
+                mods, key_code = combo
+                all_keys: list[Union[Key, Optional[KeyCode]]] = [
+                    *mods, key_code
+                ]
+                for key in all_keys:
+                    if key is None:
+                        continue
+                    if state:
+                        self.controller.press(key)
+                    else:
+                        self.controller.release(key)
 
 
 class Default(Game):
@@ -560,6 +707,9 @@ CUSTOM_ACTIONS: dict[str, str] = {}
 
 
 def register_custom_shortcut_actions() -> None:
+    for shortcut_action in SHORTCUT_ACTIONS.copy():
+        if find_class(shortcut_action) == Custom:
+            SHORTCUT_ACTIONS.remove(shortcut_action)
     for action in Custom.actions():
         SHORTCUT_ACTIONS.append(action)
 

@@ -93,22 +93,54 @@ In the Profile Editor, the following 4 things can be customized:
 #### Games
 
 To implement Actions, Games are used. A Game is a collection of Actions that belong together, for example, to control a Game running on the Computer. A Game can also have Auto Detection functionality, as well as an LED Manager. That's why, Game names can be found to select in those Menus.
-A Game's Action can be selected for a Button by setting the Button Type to `Game Action` and selecting the desired Action in the new Dropdown. Custom Actions can be added as well, but more on that in a later Section.
-
-### Keyboard Shortcuts
-
-Many Games and other Software are best controlled using Keyboard Shortcuts. These, however, may vary, depending on personal Preference, Version and even Platform. That's why it's possible to configure custom Shortcuts for certain actions, that make use of Keyboard Shortcuts. To do this, open the Shortcut Editor at `Edit` > `Keyboard Shortcuts...`. The Interface is very straightforward, click on the field next to the Action and enter a Key Combination.
-
-If an Action is not displayed in the Shortcuts Editor, it means that the Action does not make use of Keyboard Shortcuts.
-
-> For an Image showcasing the Shortcuts Editor, see [here](./screenshots/client_shortcuts.png).
+A Game's Action can be selected for a Button by setting the Button Type to `Game Action` and selecting the desired Action in the new Dropdown. Some Actions may rely on Keyboard Shortcuts, which have to be defined by the User, see Section `Shortcut Editor`. Custom Actions can be added as well, see the following section.
 
 ### Custom Actions
 
-Issuing plain Keyboard Shortcuts isn't exactly a big deal, which is why, in it's most basic form, they do not need to be implemented via code but can be freely added by the User.
+Issuing plain Keyboard Shortcuts and basic Macros isn't exactly a big deal, which is why they do not need to be implemented through code but can be freely added by the User.
 
-> _Note: Actions defined in Code may have more advanced Behavior, like Delays and advanced Macro functionality. This is currently not possible when defining Custom Actions._
+> _Note: Actions defined in Code may have more advanced Behavior, like System Calls and advanced Macro functionality. This is currently not possible when defining Custom Actions._
 
 Custom Actions can be added in the Custom Actions Manager under `Edit` > `Manage Custom Actions...`. This Dialog only allows for creating new Actions, as well as deleting them. After creating an Action, go to the Shortcuts Editor at `Edit` > `Keyboard Shortcuts...` and set the Key Combination for your newly created Custom Action.
 
 > For an Image showcasing the Custom Actions Manger, see [here](./screenshots/client_custom_actions.png).
+
+### Shortcut Editor
+
+Many Games and other Software are best controlled using Keyboard Shortcuts. These, however, may vary, depending on personal Preference, Version and even Platform. That's why it's possible to configure custom Shortcuts for certain actions, that make use of Keyboard Shortcuts. It's even possible to assign Macros to Custom Actions. To do this, open the Shortcut Editor at `Edit` > `Shortcut Editor...`. Next to each predefined action there's a field to Enter a Keyboard Shortcut that the Action issues when its Button is pressed. For Custom Actions, there's a Combobox allowing to select either a plain Keyboard Shortcut or a Macro, that was defined previously in the Macro Manager.
+
+If an Action is not displayed in the Shortcut Editor, it means that the Action does not make use of Keyboard Shortcuts.
+
+> For an Image showcasing the Shortcut Editor, see [here](./screenshots/client_shortcuts.png).
+
+### Macro Manager
+
+Macros can be selected for Custom Actions in the Shortcut Editor. They're defined in the Macro Manager at `Edit` > `Manage Macros...`. On the left there's a List of Macros, allowing to add and delete Macros, as well as editing their Name by double clicking on it. On the right, Macro Actions can be created and configured, as well as the Macro Run Mode.
+
+There are 3 Macro Run Modes:
+
+- Run Until Released: Run the Macro in a Loop until the Button is released. The Macro will always finish the current Flow after the Button is released.
+- Run Until Pressed Again: Run the Macro in a Loop until the Button that activated it is pressed again. The Macro will always finish the current Flow after the Button is pressed again.
+- Run N Times (Default): Run the Macro a specified Number of Times. Defaults to 1.
+
+Actions can be inserted before the currently selected Action, or appended when no Action is selected, by selecting an Action in the `Select Action...` Combobox.
+
+There are 9 Actions:
+
+- Press Key: Press a Key Combination
+- Release Key: Release a Key Combination
+- Delay: Pause execution for a certain Time
+- Left Mouse Button Down: Press the left Mouse Button
+- Left Mouse Button Up: Release the left Mouse Button
+- Middle Mouse Button Down: Press the middle Mouse Button
+- Middle Mouse Button Up: Release the middle Mouse Button
+- Right Mouse Button Down: Press the right Mouse Button
+- Right Mouse Button Up: Release the right Mouse Button
+
+Actions can be configured and deleted by selecting them and pressing `Change` or `Delete`.
+
+Only 3 Actions can be changed:
+
+- Press Key: Input a Key Combination to press. For modifiers, there's a Combobox to select one.
+- Release Key: Input a Key Combination to release. For modifiers, there's a Combobox to select one.
+- Delay: Set a time in Milliseconds (1000ms = 1s)
