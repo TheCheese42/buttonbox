@@ -548,7 +548,7 @@ class Window(QMainWindow, Ui_MainWindow):  # type: ignore[misc]
                 action = entry[1]
                 combo = entry[2]
                 edit = entry[3]
-                if combo.currentIndex() == 0:
+                if combo is None or combo.currentIndex() == 0:
                     shortcut = edit.keySequence().toString()
                 else:
                     shortcut = f"macro:{combo.currentText()}"
@@ -1071,7 +1071,9 @@ class KeyboardShortcuts(QDialog, Ui_KeyboardShortcuts):  # type: ignore[misc]
         super().__init__(parent)
         self.macros = macros
         # Ex.: [("game1", "action1", QComboBox(), QKeySequenceEdit()), ...]
-        self.items: list[tuple[str, str, QComboBox, QKeySequenceEdit]] = []
+        self.items: list[
+            tuple[str, str, Optional[QComboBox], QKeySequenceEdit]
+        ] = []
         self.setupUi(self)
 
     def setupUi(self, *args: Any, **kwargs: Any) -> None:
@@ -1102,29 +1104,37 @@ class KeyboardShortcuts(QDialog, Ui_KeyboardShortcuts):  # type: ignore[misc]
             if shortcut is None:
                 shortcut = ""
 
-            combo = QComboBox()
-            combo.addItem("Plain Shortcut")
-            for i, macro in enumerate(self.macros):
-                combo.addItem(macro["name"])  # type: ignore[arg-type]
-            index = 0
-            if shortcut.startswith("macro:"):
-                macro_name = shortcut.split(":", 1)[1]
-                for i in range(combo.count()):
-                    text = combo.itemText(i)
-                    if text == macro_name:
-                        index = i
-            combo.setCurrentIndex(index)
-
             edit = QKeySequenceEdit()
-            combo.currentIndexChanged.connect(
-                partial(self._combo_changed, combo, edit)
-            )
-            self._combo_changed(combo, edit)
+
+            if game == model.Custom:
+                combo: Optional[QComboBox] = QComboBox()
+                if combo is None:
+                    return  # To satisfy mypy...
+                combo.addItem("Plain Shortcut")
+                for i, macro in enumerate(self.macros):
+                    combo.addItem(macro["name"])  # type: ignore[arg-type]
+                index = 0
+                if shortcut.startswith("macro:"):
+                    macro_name = shortcut.split(":", 1)[1]
+                    for i in range(combo.count()):
+                        text = combo.itemText(i)
+                        if text == macro_name:
+                            index = i
+                combo.setCurrentIndex(index)
+                combo.currentIndexChanged.connect(
+                    partial(self._combo_changed, combo, edit)
+                )
+                self._combo_changed(combo, edit)
+            else:
+                combo = None
+                index = 0
+
             if shortcut and index == 0:
                 edit.setKeySequence(QKeySequence.fromString(shortcut))
 
             hbox.addWidget(label)
-            hbox.addWidget(combo)
+            if game == model.Custom:
+                hbox.addWidget(combo)
             hbox.addWidget(edit)
             self.items.append((game_str, action.__name__, combo, edit))
             lo.addLayout(hbox)
