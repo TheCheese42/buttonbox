@@ -26,7 +26,7 @@ class Connection:
         log: Callable[[str, str], None],
         log_mc: Callable[[str], None],
     ) -> None:
-        self.port = "/dev/pts/6"#port
+        self.port = port
         self.baudrate = baudrate
         self.log = log
         self.log_mc = log_mc
