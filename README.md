@@ -26,6 +26,7 @@ Wokwi project: <https://wokwi.com/projects/410915727655762945> (illustrational).
 Technical Schematics:
 ![image](./screenshots/schematics.jpeg)
 R1=59.1K Ω !Warning all resistors labeled R1 are separate and not connected in any way exept for gnd!
+
 R2=1k Ω
 
 ## Installing
